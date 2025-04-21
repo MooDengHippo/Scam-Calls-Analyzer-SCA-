@@ -1,5 +1,6 @@
 #include "queue.h"
 #include <stdlib.h>
+#include "hash_map.h"
 
 Queue *queue_init(void) {
     Queue *q = malloc(sizeof(Queue));

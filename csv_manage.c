@@ -1,47 +1,114 @@
-#include "csv_manage.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "csv_manage.h"
 #include "utils.h"
 #include "hash_map.h"
+/*
+ * Trim
+ * -------------------------
+ * Remove leading and trailing whitespace (spaces, tabs, newlines).
+ * Parameters:
+ *   str - Input string to trim
+ * Returns:
+ *   A pointer to the trimmed string
+ */
+static char *trim(char *s){
 
+    while(*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r') s++;
+    char *e = s + strlen(s) - 1;
+    while(e > s && (*e == ' ' || *e == '\t' || *e == '\n' || *e == '\r')) *e-- = '\0';
+    return s;
 
-static char *trim(char *s){ while(*s==' '||*s=='\t' || *s=='\n' || *s=='\r') s++; char *e=s+strlen(s)-1; while(e>s && (*e==' '||*e=='\t'||*e=='\n' || *e=='\r')) *e--='\0'; return s; }
-
+}
+/*
+ * Read CSV and populate HashMap and Graph structure
+ * - Format:
+ * R, <phone>, <score 0‑1>, <reports> // Record of suspicious number
+ * E, <phoneA>, <phoneB>              // Relationship between numbers
+ * - Automatically normalize phone numbers
+ * - Boosts risk if number is not Thai (+66)
+ *   If not SEA → even higher risk boost
+ */
 int csv_read_data(const char *fname, HashMap *map, GraphNode *nodes[]){
-    FILE *fp=fopen(fname,"r"); if(!fp){ perror("csv open"); return -1; }
-    char line[256]; int cnt=0;
-    while(fgets(line,sizeof(line),fp)){
-        char *tok=strtok(line,","); if(!tok) continue; tok=trim(tok);
-        if(*tok=='#') continue; // comment
-        if(strcmp(tok,"R")==0){
-            char *p=strtok(NULL,","), *score=strtok(NULL,","), *rep=strtok(NULL,",");
-            if(!p||!score) continue;
-            p=trim(p); score=trim(score);
-            char norm[MAX_PHONE_LENGTH]; if(normalize_phone(p,norm,sizeof(norm))<0) continue;
-            float sc=atof(score); int rc=rep?atoi(trim(rep)):1;
-            // If phone NOT Thai & in SEA -> +bonus suspicion, if non‑SEA even higher
-            int is_sea=is_sea_country(norm);
-            if(!is_sea) sc = sc<0.5 ? 0.5f : sc; // bump risk of non‑SEA
-            hash_map_insert(map,norm,sc,rc);
-            cnt++;
-        } else if(strcmp(tok,"E")==0){
-            char *a=strtok(NULL,","), *b=strtok(NULL,","); if(!a||!b) continue;
-            a=trim(a); b=trim(b);
-            char na[MAX_PHONE_LENGTH], nb[MAX_PHONE_LENGTH];
-            if(normalize_phone(a,na,sizeof(na))<0 || normalize_phone(b,nb,sizeof(nb))<0) continue;
-            graph_add_edge(nodes,na,nb); cnt++; }
+
+    FILE *fp = fopen(fname, "r");
+    if(!fp){
+        perror("CSV open!");
+        return -1;
     }
-    
+
+    char line[256];
+    int cnt = 0;
+
+    while(fgets(line, sizeof(line), fp)){
+        char *tok = strtok(line, ",");
+        if(!tok) continue;
+        tok = trim(tok);
+
+        if(*tok == '#') continue; // Ignore comment lines
+
+        if(strcmp(tok, "R") == 0){
+            // Handle record row: R,<phone>,<score>,<report_count>
+            char *p = strtok(NULL, ",");
+            char *score = strtok(NULL, ",");
+            char *rep = strtok(NULL, ",");
+            if(!p || !score) continue;
+
+            p = trim(p);
+            score = trim(score);
+
+            char norm[MAX_PHONE_LENGTH];
+            if(normalize_phone(p, norm, sizeof(norm)) < 0) continue;
+
+            float sc = atof(score);
+            int rc = rep ? atoi(trim(rep)) : 1;
+
+            // Customized risk boosting logic
+            // If phone is not Thai (+66), increase suspicious score
+            if(strncmp(norm, "+66", 3) != 0){
+                sc = sc < 0.5f ? 0.5f : sc;  // base bump for non-Thai numbers
+
+                // If phone also not in SEA region --> bump further
+                if(!is_sea_country(norm)){
+                    sc = sc < 0.7f ? 0.7f : sc;
+                }
+            }
+
+            hash_map_insert(map, norm, sc, rc);
+            cnt++;
+
+        }else if(strcmp(tok, "E") == 0){
+            // Handle edge row: E,<phoneA>,<phoneB>
+            char *a = strtok(NULL, ",");
+            char *b = strtok(NULL, ",");
+            if(!a || !b) continue;
+
+            a = trim(a);
+            b = trim(b);
+
+            char na[MAX_PHONE_LENGTH], nb[MAX_PHONE_LENGTH];
+            if(normalize_phone(a, na, sizeof(na)) < 0 || normalize_phone(b, nb, sizeof(nb)) < 0) continue;
+
+            graph_add_edge(nodes, na, nb);
+            cnt++;
+        }
+    }
     fclose(fp);
     return cnt;
-}
 
+}
+/*
+ * Write current map data back to CSV
+ * - Format: R,<phone>,<score>,<report_count>
+ * - Used on program exit to persist data
+ */
 int csv_write_data(const char *fname, HashMap *map){
+
     FILE *fp = fopen(fname, "w");
-    if(!fp){ 
-    perror("csv write"); 
-    return -1; 
+    if(!fp){
+        perror("csv write");
+        return -1;
     }
 
     for(int i = 0; i < TABLE_SIZE; ++i){
@@ -51,7 +118,7 @@ int csv_write_data(const char *fname, HashMap *map){
             rec = rec->next;
         }
     }
-
     fclose(fp);
     return 0;
+
 }
