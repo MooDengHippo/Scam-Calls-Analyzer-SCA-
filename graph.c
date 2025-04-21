@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "queue.h"
+#include "hash_map.h"
 
 // ▸ Return existing node or allocate a new one
 GraphNode *graph_get_node(GraphNode *nodes[], const char *phone) {
