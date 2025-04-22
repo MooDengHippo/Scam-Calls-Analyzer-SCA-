@@ -1,32 +1,30 @@
 #ifndef HASH_MAP_H
 #define HASH_MAP_H
-
 #include "utils.h"
-#include <stddef.h>
+#include <stddef.h>  // for size_t
+#define TABLE_SIZE 2003  // Prime number hash table size for better distribution
 
-#define TABLE_SIZE 2003
+// Record structure for scam data
+typedef struct ScamRecord{
 
-typedef struct ScamRecord {
-    char  phone[MAX_PHONE_LENGTH];
-    float suspicious_score;
-    int   report_count;
-    struct ScamRecord *next;
-} ScamRecord;
+    char phone[MAX_PHONE_LENGTH];  // Normalized phone number
+    float suspicious_score;        // Risk score (0–1)
+    int report_count;              // Number of reports
+    struct ScamRecord *next;       // Linked list for collision handling
 
-typedef struct {
+}ScamRecord;
+
+// Hash table mapping phone numbers to scam records
+typedef struct{
+
     ScamRecord *buckets[TABLE_SIZE];
-} HashMap;
+    
+}HashMap;
 
-// Initializes a new hash map and returns a pointer to it.
+// Function declarations
 HashMap* hash_map_init(void);
-
-// Inserts or updates a ScamRecord in the map
-void hash_map_insert(HashMap *m, const char *phone, float score, int reports);
-
-// Looks up a phone number. Returns ScamRecord* if found, or NULL if not found.
-ScamRecord* hash_map_lookup(HashMap *m, const char *phone);
-
-// Frees all memory used by the hash map
-void hash_map_free(HashMap *m);
+void hash_map_insert(HashMap *map, const char *phone, float score, int reports);
+ScamRecord* hash_map_lookup(HashMap *map, const char *phone);
+void hash_map_free(HashMap *map);
 
 #endif // HASH_MAP_H
