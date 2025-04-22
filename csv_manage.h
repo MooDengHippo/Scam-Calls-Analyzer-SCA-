@@ -13,10 +13,10 @@
  */
 int csv_read_data(const char *fname, HashMap *map, GraphNode *nodes[]);
 /*
- * ▸ Write the current state of the HashMap back to CSV
- *     - Used on exit to persist the system state
- *     - Format:
- *         R,<phone>,<score>,<report_count>
+ * Write the current state of the HashMap back to CSV
+ * - Used on exit to persist the system state
+ * - Format:
+ *    R,<phone>,<score>,<report_count>
  */
 int csv_write_data(const char *fname, HashMap *map);
 

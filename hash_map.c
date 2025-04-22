@@ -64,11 +64,11 @@ void hash_map_insert(HashMap *map, const char *phone, float score, int reports){
 /*
  * Lookup Record by Phone Number
  * ----------------------------------------
- * Returns pointer to ScamRecord if found, else NULL
+ * Returns pointer to ScamRecord if found else NULL
  */
 ScamRecord* hash_map_lookup(HashMap *map, const char *phone){
 
-    if (!map || !phone) return NULL;
+    if(!map || !phone) return NULL;
 
     unsigned int index = hash_function(phone);
     ScamRecord *current = map->buckets[index];
@@ -89,9 +89,9 @@ ScamRecord* hash_map_lookup(HashMap *map, const char *phone){
  */
 void hash_map_free(HashMap *map){
 
-    if (!map) return;
+    if(!map) return;
 
-    for (int i = 0; i < TABLE_SIZE; ++i){
+    for(int i = 0; i < TABLE_SIZE; ++i){
         ScamRecord *current = map->buckets[i];
         while(current){
             ScamRecord *next = current->next;
@@ -100,5 +100,5 @@ void hash_map_free(HashMap *map){
         }
     }
     free(map);
-    
+
 }
