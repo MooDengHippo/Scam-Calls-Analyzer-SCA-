@@ -41,7 +41,7 @@ int main(void){
     const char *DB_FILE = "data/scam_numbers.csv";
     int rows = csv_read_data(DB_FILE, map, nodes);
     if(rows < 0){
-        fprintf(stderr, "⚠ Error !!!: Failed to load data from %s\n", DB_FILE);
+        fprintf(stderr, "Error !!!: Failed to load data from %s\n", DB_FILE);
         hash_map_free(map);
         return EXIT_FAILURE;
     }
