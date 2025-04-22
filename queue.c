@@ -1,33 +1,85 @@
-#include "queue.h"
 #include <stdlib.h>
-#include "hash_map.h"
+#include "queue.h"
+/*
+ * Queue Initialization
+ * ----------------------------------------
+ * Allocates and returns an empty queue.
+ */
+Queue *queue_init(void){
 
-Queue *queue_init(void) {
-    Queue *q = malloc(sizeof(Queue));
-    q->front = q->rear = NULL;
-    return q;
+    Queue *queue = malloc(sizeof(Queue));
+    if(!queue) return NULL;
+    queue->front = NULL;
+    queue->rear = NULL;
+    return queue;
+
 }
+/*
+ * Enqueue
+ * ----------------------------------------
+ * Adds a GraphNode to the end of the queue.
+ */
+void enqueue(Queue *queue, GraphNode *node){
 
-void enqueue(Queue *q, GraphNode *node) {
-    QueueNode *n = malloc(sizeof(QueueNode));
-    n->data = node; n->next = NULL;
-    if (!q->rear) q->front = q->rear = n;
-    else { q->rear->next = n; q->rear = n; }
+    if(!queue || !node) return;
+    
+    QueueNode *new_node = malloc(sizeof(QueueNode));
+    if(!new_node) return;
+    
+    new_node->data = node;
+    new_node->next = NULL;
+
+    if(!queue->rear){
+        queue->front = queue->rear = new_node;
+    }else{
+        queue->rear->next = new_node;
+        queue->rear = new_node;
+    }
+
 }
+/*
+ * Dequeue
+ * ----------------------------------------
+ * Removes the front GraphNode from the queue and returns it.
+ * Returns NULL if the queue is empty.
+ */
+GraphNode *dequeue(Queue *queue){
 
-GraphNode *dequeue(Queue *q) {
-    if (!q->front) return NULL;
-    QueueNode *n = q->front;
-    GraphNode *res = n->data;
-    q->front = n->next;
-    if (!q->front) q->rear = NULL;
-    free(n);
-    return res;
+    if(!queue || !queue->front) return NULL;
+
+    QueueNode *tempo = queue->front;
+    GraphNode *node = tempo->data;
+
+    queue->front = tempo->next;
+    if(!queue->front){
+        queue->rear = NULL;
+    }
+
+    free(tempo);
+    return node;
+
 }
+/*
+ * Queue Is Empty
+ * ----------------------------------------
+ * Returns 1 if the queue is empty, 0 otherwise.
+ */
+int queue_is_empty(Queue *queue){
 
-int queue_is_empty(Queue *q) { return q->front == NULL; }
+    return queue && queue->front == NULL;
 
-void queue_free(Queue *q) {
-    while (!queue_is_empty(q)) dequeue(q);
-    free(q);
+}
+/*
+ * Queue Free
+ * ----------------------------------------
+ * Frees all memory used by the queue.
+ */
+void queue_free(Queue *queue){
+
+    if(!queue) return;
+    while(!queue_is_empty(queue)){
+        dequeue(queue);
+    }
+    free(queue);
+
 }

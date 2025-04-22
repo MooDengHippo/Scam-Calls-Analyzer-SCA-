@@ -14,27 +14,22 @@ typedef struct GraphNode{
     struct GraphNode *neighbors[MAX_NEIGHBORS]; // Adjacency list
     int neighbor_count;                         // Number of connected nodes
     int visited;                                // BFS/DFS visited flag
-    
+
 }GraphNode;
-/*
- * Get or create a graph node for a phone number.
- */
+
+// Get or create a graph node for a phone number.
 GraphNode *graph_get_node(GraphNode *nodes[], const char *phone);
-/*
- * Add a bidirectional edge between two phone numbers.
- */
+
+// Add a bidirectional edge between two phone numbers.
 void graph_add_edge(GraphNode *nodes[], const char *p1, const char *p2);
-/*
- * Perform BFS traversal from a starting phone number.
- */
+
+// Perform BFS traversal from a starting phone number.
 void graph_bfs(GraphNode *nodes[], const char *start_phone);
-/*
- * Perform DFS traversal from a starting phone number.
- */
+
+// Perform DFS traversal from a starting phone number.
 void graph_dfs(GraphNode *nodes[], const char *start_phone);
-/*
- * Free a graph node and clear its data.
- */
+
+// Free a graph node and clear its data.
 void graph_node_free(GraphNode *node);
 
-#endif /* GRAPH_H */
+#endif // GRAPH_H
