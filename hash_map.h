@@ -1,16 +1,16 @@
 #ifndef HASH_MAP_H
 #define HASH_MAP_H
 #include "utils.h"
-#include <stddef.h>  // for size_t
-#define TABLE_SIZE 2003  // Prime number hash table size for better distribution
+#include <stddef.h> // for size_t
+#define TABLE_SIZE 2003 // Prime number hash table size for better distribution
 
 // Record structure for scam data
 typedef struct ScamRecord{
 
-    char phone[MAX_PHONE_LENGTH];  // Normalized phone number
-    float suspicious_score;        // Risk score (0–1)
-    int report_count;              // Number of reports
-    struct ScamRecord *next;       // Linked list for collision handling
+    char phone[MAX_PHONE_LENGTH]; // Normalized phone number
+    float suspicious_score;       // Risk score (0–1)
+    int report_count;             // Number of reports
+    struct ScamRecord *next;      // Linked list for collision handling
 
 }ScamRecord;
 
@@ -18,7 +18,7 @@ typedef struct ScamRecord{
 typedef struct{
 
     ScamRecord *buckets[TABLE_SIZE];
-    
+
 }HashMap;
 
 // Function declarations
