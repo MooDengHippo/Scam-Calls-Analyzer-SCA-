@@ -28,7 +28,7 @@ static char *trim(char *s){
  * E, <phoneA>, <phoneB>              // Relationship between numbers
  * - Automatically normalize phone numbers
  * - Boosts risk if number is not Thai (+66)
- *   If not SEA → even higher risk boost
+ *   If not SEA --> even higher risk boost
  */
 int csv_read_data(const char *fname, HashMap *map, GraphNode *nodes[]){
 
@@ -59,18 +59,15 @@ int csv_read_data(const char *fname, HashMap *map, GraphNode *nodes[]){
             score = trim(score);
 
             char norm[MAX_PHONE_LENGTH];
-            if(normalize_phone(p, norm, sizeof(norm)) < 0) continue;
+            if(Normalize_Phone(p, norm, sizeof(norm)) < 0) continue;
 
             float sc = atof(score);
             int rc = rep ? atoi(trim(rep)) : 1;
 
             // Customized risk boosting logic
-            // If phone is not Thai (+66), increase suspicious score
             if(strncmp(norm, "+66", 3) != 0){
-                sc = sc < 0.5f ? 0.5f : sc;  // base bump for non-Thai numbers
-
-                // If phone also not in SEA region --> bump further
-                if(!is_sea_country(norm)){
+                sc = sc < 0.5f ? 0.5f : sc;
+                if(!Is_SEA_Country(norm)){
                     sc = sc < 0.7f ? 0.7f : sc;
                 }
             }
@@ -88,7 +85,7 @@ int csv_read_data(const char *fname, HashMap *map, GraphNode *nodes[]){
             b = trim(b);
 
             char na[MAX_PHONE_LENGTH], nb[MAX_PHONE_LENGTH];
-            if(normalize_phone(a, na, sizeof(na)) < 0 || normalize_phone(b, nb, sizeof(nb)) < 0) continue;
+            if(Normalize_Phone(a, na, sizeof(na)) < 0 || Normalize_Phone(b, nb, sizeof(nb)) < 0) continue;
 
             graph_add_edge(nodes, na, nb);
             cnt++;
