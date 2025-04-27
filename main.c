@@ -1,4 +1,4 @@
-/* ───── main.c — Scam Calls Analyzer ───── */
+/* ───── MAIN — Scam Calls Analyzer ───── */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,14 +6,15 @@
 #include "hash_map.h"
 #include "graph.h"
 #include "utils.h"
+#include "cli_user.h"
 /* ───── CLI Options ───── */
 static void print_main_menu(void){
 
     puts("========================================");
     puts("     Scam Calls Analyzer  (SCA)");
     puts("========================================");
-    puts(" 1) User Mode  –  Check a phone number");
-    puts(" 2) Admin Mode –  Manage database");
+    puts(" 1) User Mode  -  Check a phone number");
+    puts(" 2) Admin Mode -  Manage database");
     puts(" 3) Exit");
     printf("\nEnter choice: ");
 
@@ -25,9 +26,9 @@ static void display_suspicious_score(float score){
     printf("\nSuspicious Score: %6.2f %%\n[", score * 100);
     for(int i = 0; i < 20; ++i) putchar(i < bar ? '#' : '-');
     puts("]");
-    if      (score > 0.8)  puts("⚠  HIGH RISK!\n");
-    else if (score > 0.5)  puts("⚠  MEDIUM RISK\n");
-    else                   puts("✅  Low risk\n");
+    if      (score > 0.8)  puts("  HIGH RISK!\n");
+    else if (score > 0.5)  puts("  MEDIUM RISK\n");
+    else                   puts("  LOW RISK\n");
 
 }
 /* ───── main program ───── */
@@ -53,30 +54,7 @@ int main(void){
         if(scanf("%d%*c", &choice) != 1) break; // Flush newline
 
         if(choice == 1){                        // *** USER MODE ***
-            char raw[64];
-            printf("\nEnter phone (q to return): ");
-            if(!fgets(raw, sizeof raw, stdin) || raw[0]=='q'){
-                 puts(""); continue; 
-            }
-
-            char norm[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(raw, norm, sizeof norm) < 0){
-                puts("Invalid phone format\n"); continue;
-            }
-
-            ScamRecord *rec = hash_map_lookup(map, norm);
-            if(rec){
-                printf("\n📌 Number found (reported %d times)\n", rec->report_count);
-                display_suspicious_score(rec->suspicious_score);
-            }else{
-                if(!Is_SEA_Country(norm)){
-                    puts("\n⚠  Foreign (non‑SEA) number – HIGH RISK!\n");
-                }else{
-                    puts("\n🔎 Not found – exploring relationship graph (BFS)\n");
-                    graph_bfs(nodes, norm);
-                }
-            }
-
+            user_mode(map, nodes);
         }else if(choice == 2){                  // *** ADMIN MODE ***
             while(1){
                 puts("\n--- Admin Menu ---");
@@ -89,7 +67,7 @@ int main(void){
                 if (a == 1){
                     char phone[64], risk_str[16], rep_str[16];
                     printf("Phone: "); fgets(phone, sizeof phone, stdin);
-                    printf("Risk score (0‑1): "); fgets(risk_str, sizeof risk_str, stdin);
+                    printf("Risk score (0-1): "); fgets(risk_str, sizeof risk_str, stdin);
                     printf("Report count: "); fgets(rep_str,  sizeof rep_str,  stdin);
 
                     char norm[MAX_PHONE_LENGTH];
@@ -104,7 +82,7 @@ int main(void){
                     int rc = atoi(rep_str);
 
                     hash_map_insert(map, norm, sc, rc);
-                    printf("✅ Added %s\n", norm);
+                    printf("Added %s\n", norm);
 
                 }else if(a == 2){
                     char p1[64], p2[64];
@@ -117,7 +95,7 @@ int main(void){
                         continue;
                     }
                     graph_add_edge(nodes, n1, n2);
-                    printf("✅ Linked %s ↔ %s\n", n1, n2);
+                    printf("Linked %s ↔ %s\n", n1, n2);
 
                 }else break;
             }
@@ -137,7 +115,7 @@ int main(void){
     }
 
     hash_map_free(map);
-    puts("See you later, ✋✋✋Bye");
+    puts("See you later, Bye!!!");
     return 0;
 
 }

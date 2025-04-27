@@ -60,9 +60,9 @@ void user_mode(HashMap *map, GraphNode *nodes[]){
             display_suspicious_score(rec->suspicious_score);
         }else{
             if(!Is_SEA_Country(norm)){
-                puts("\n\u26a0  Foreign (non‑SEA) number – HIGH RISK!\n");
+                puts("\n\u26a0  Foreign (Non-SEA) number - HIGH RISK!\n");
             }else{
-                puts("\n\ud83d\udd0e Not found – exploring relationship graph:\n");
+                puts("\n\ud83d\udd0e Not found - exploring relationship graph:\n");
                 GraphNode *start = graph_get_node(nodes, norm);
                 if(start){
                     display_scam_graph(start, 0);
@@ -71,6 +71,6 @@ void user_mode(HashMap *map, GraphNode *nodes[]){
                 }
             }
         }
+        
     }
-
 }
