@@ -1,7 +1,7 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
-#include "utils.h"
 #include <stddef.h> // for size_t
+#include "utils.h"
 #define TABLE_SIZE 2003 // Prime number hash table size for better distribution
 
 // Record structure for scam data

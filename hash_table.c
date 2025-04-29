@@ -1,6 +1,6 @@
-#include "hash_table.h"
 #include <stdlib.h>
 #include <string.h>
+#include "hash_table.h"
 /*
  * Hash Function
  * ----------------------------------------
