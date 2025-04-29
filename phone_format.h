@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef PHONE_FORMAT_H
+#define PHONE_FORMAT_H
 #include <stddef.h>
 #include <ctype.h>
 #include <string.h>
@@ -27,4 +27,4 @@ int Get_Country_Code(const char *normalized, char *code_out, size_t code_out_siz
  */
 int Is_SEA_Country(const char *normalized);
 
-#endif // UTILS_H 
+#endif // PHONE_FORMAT_H 
