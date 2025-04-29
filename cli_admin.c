@@ -8,8 +8,8 @@
 #include "logging.h"
 
 // Show all pending reports from user
-static void view_pending_reports(void){
-
+static void view_pending_reports(){
+    
     FILE *fp = fopen("data/pending_reports.csv", "r");
     if(!fp){
         puts("No pending reports found.");
@@ -17,7 +17,7 @@ static void view_pending_reports(void){
         return;
     }
     puts("\n--- Pending Reports ---");
-    char line[64];
+    char line[128];
     while(fgets(line, sizeof(line), fp)){
         printf(" - %s", line);
     }
