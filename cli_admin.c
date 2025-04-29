@@ -7,7 +7,40 @@
 #include "graph.h"
 #include "logging.h"
 
-// View user-submitted reports
+// Analyze new phone number
+static float estimate_score(const char *phone, GraphNode *nodes[], HashTable *table){
+
+    float base_score = 0.3f;
+
+    if(!Is_SEA_Country(phone)){
+        base_score = 0.7f;
+    }else if(strncmp(phone, "+66", 3) != 0){
+        base_score = 0.5f;
+    }
+
+    GraphNode *node = graph_get_node(nodes, phone);
+    if(node && node->neighbor_count > 0){
+        float total = 0;
+        int count = 0;
+        for(int i = 0; i < node->neighbor_count; i++){
+            ScamRecord *rec = hash_table_lookup(table, node->neighbors[i]->phone);
+            if(rec){
+                total += rec->suspicious_score;
+                count++;
+            }
+        }
+        if(count > 0){
+            float avg = total / count;
+            if(avg > base_score)
+                base_score = avg;
+        }
+    }
+
+    return base_score > 1.0f ? 1.0f : base_score;
+
+}
+
+// View user submitted reports
 static void view_pending_reports(){
 
     FILE *fp = fopen("data/pending_reports.csv", "r");
@@ -44,24 +77,38 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
     ScamRecord *rec = hash_table_lookup(table, norm);
     if(rec){
         printf("\nPhone: %s\nRisk Score: %.2f\nReports: %d\n",
-               rec->phone, rec->suspicious_score, rec->report_count);
+            rec->phone, rec->suspicious_score, rec->report_count);
         Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
     }else{
         GraphNode *node = graph_get_node(nodes, norm);
-        if(node && node->neighbor_count > 0){
+        if(node && node->neighbor_count > 0) {
             printf("\nNo record found, but connected to %d neighbors:\n", node->neighbor_count);
             for(int i = 0; i < node->neighbor_count; i++){
                 printf(" - %s\n", node->neighbors[i]->phone);
             }
-            Logging_Write(LOG_INFO, "Admin analyzed (graph): %s", norm);
         }else{
             puts("\nNo record or relationship found.");
-            Logging_Write(LOG_INFO, "Admin analyzed (no data): %s", norm);
         }
+
+        float est = estimate_score(norm, nodes, table);
+        printf("Estimated suspicious score: %.2f\n", est);
+        printf("Would you like to add this number to the database? (y/n): ");
+
+        char ans[8];
+        if(fgets(ans, sizeof ans, stdin) && (ans[0] == 'y' || ans[0] == 'Y')){
+            hash_table_insert(table, norm, est, 1);
+            printf("Inserted %s with score %.2f and 1 report.\n", norm, est);
+            Logging_Write(LOG_INFO, "Admin inserted new record via analyze: %s (%.2f)", norm, est);
+        }else{
+            puts("Skipped adding to database.");
+        }
+
+        Logging_Write(LOG_INFO, "Admin analyzed (not found): %s", norm);
     }
 
 }
 
+// Main CLI for Admin
 void admin_mode(HashTable *table, GraphNode *nodes[]){
 
     while(1){
@@ -88,7 +135,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             if(!fgets(rep_str, sizeof(rep_str), stdin)) break;
 
             char norm[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(phone, norm, sizeof(norm)) < 0){
+            if(Normalize_Phone(phone, norm, sizeof(norm)) < 0) {
                 puts("Invalid phone!");
                 Logging_Write(LOG_WARN, "Admin entered invalid phone: %s", phone);
                 continue;
@@ -114,8 +161,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             if(!fgets(p2, sizeof(p2), stdin)) break;
 
             char n1[MAX_PHONE_LENGTH], n2[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(p1, n1, sizeof(n1)) < 0 ||
-                Normalize_Phone(p2, n2, sizeof(n2)) < 0){
+            if(Normalize_Phone(p1, n1, sizeof(n1)) < 0 || Normalize_Phone(p2, n2, sizeof(n2)) < 0) {
                 puts("One or both phones invalid!");
                 Logging_Write(LOG_WARN, "Admin tried linking invalid: %s - %s", p1, p2);
                 continue;
@@ -125,12 +171,10 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             printf("Linked %s ↔ %s\n", n1, n2);
             Logging_Write(LOG_INFO, "Admin linked: %s ↔ %s", n1, n2);
 
-        }else if(choice == 3){
+        }else if(choice == 3) {
             view_pending_reports();
-
-        }else if(choice == 4){
+        }else if(choice == 4) {
             analyze_number(table, nodes);
-
         }else{
             break;
         }
