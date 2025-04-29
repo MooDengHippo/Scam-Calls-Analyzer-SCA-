@@ -20,16 +20,13 @@ void Logging_Write(LogLevel level, const char *format, ...){
 
     if(!log_fp) return;
 
-    // Current time
     time_t raw = time(NULL);
     struct tm *t = localtime(&raw);
 
-    // Timestamp
     fprintf(log_fp, "[%04d-%02d-%02d %02d:%02d:%02d] ",
             t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
             t->tm_hour, t->tm_min, t->tm_sec);
 
-    // Log level
     switch(level){
         case LOG_INFO:  fputs("[INFO ] ", log_fp); break;
         case LOG_WARN:  fputs("[WARN ] ", log_fp); break;
@@ -37,7 +34,6 @@ void Logging_Write(LogLevel level, const char *format, ...){
         default:        fputs("[UNKWN] ", log_fp); break;
     }
 
-    // Message
     va_list args;
     va_start(args, format);
     vfprintf(log_fp, format, args);
