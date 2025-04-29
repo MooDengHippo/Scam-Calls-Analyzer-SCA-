@@ -3,14 +3,18 @@
 #include "graph.h"
 // Queue node for holding GraphNode pointers
 typedef struct QueueNode{
+
     GraphNode *data;
     struct QueueNode *next;
+
 }QueueNode;
 
 // Main queue structure with front and rear pointers
 typedef struct Queue{
+
     QueueNode *front;
     QueueNode *rear;
+    
 }Queue;
 
 // Initialize a new empty queue

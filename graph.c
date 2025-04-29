@@ -73,7 +73,7 @@ void graph_bfs(GraphNode *nodes[], const char *start_phone){
 
 }
 
-/* Helper for Depth-First Search */
+// Helper for Depth-First Search
 static void dfs_visit(GraphNode *node){
 
     node->visited = 1;
