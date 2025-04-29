@@ -73,13 +73,13 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
 
         ScamRecord *rec = hash_table_lookup(table, norm);
         if(rec){
-            printf("\n\ud83d\udccc Number found (reported %d times)\n", rec->report_count);
+            printf("\nNumber found (reported %d times)\n", rec->report_count);
             display_suspicious_score(rec->suspicious_score);
         }else{
             if(!Is_SEA_Country(norm)){
-                puts("\n\u26a0 Foreign (Non-SEA) number - HIGH RISK!\n");
+                puts("\nForeign (Non-SEA) number - HIGH RISK!\n");
             }else{
-                puts("\n\ud83d\udd0e Not found - exploring relationship graph:\n");
+                puts("\nNot found - exploring relationship graph:\n");
                 GraphNode *start = graph_get_node(nodes, norm);
                 if(start){
                     display_scam_graph(start, 0);
