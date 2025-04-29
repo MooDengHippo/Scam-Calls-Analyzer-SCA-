@@ -7,15 +7,16 @@
 #include "graph.h"
 #include "logging.h"
 
-// Show all pending reports from user
+// View user-submitted reports
 static void view_pending_reports(){
-    
+
     FILE *fp = fopen("data/pending_reports.csv", "r");
     if(!fp){
         puts("No pending reports found.");
         Logging_Write(LOG_WARN, "Admin tried to view missing pending_reports.csv");
         return;
     }
+
     puts("\n--- Pending Reports ---");
     char line[128];
     while(fgets(line, sizeof(line), fp)){
@@ -26,7 +27,7 @@ static void view_pending_reports(){
 
 }
 
-// Analyze a specific phone number
+// Analyze number in hash table and graph
 static void analyze_number(HashTable *table, GraphNode *nodes[]){
 
     char raw[64];
@@ -34,7 +35,7 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
     if(!fgets(raw, sizeof raw, stdin)) return;
 
     char norm[MAX_PHONE_LENGTH];
-    if(Normalize_Phone(raw, norm, sizeof(norm)) < 0) {
+    if(Normalize_Phone(raw, norm, sizeof(norm)) < 0){
         puts("Invalid phone format!");
         Logging_Write(LOG_WARN, "Admin analyze failed, invalid phone: %s", raw);
         return;
@@ -44,26 +45,23 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
     if(rec){
         printf("\nPhone: %s\nRisk Score: %.2f\nReports: %d\n",
                rec->phone, rec->suspicious_score, rec->report_count);
-        Logging_Write(LOG_INFO, "Admin analyzed number (record found): %s", norm);
+        Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
     }else{
         GraphNode *node = graph_get_node(nodes, norm);
-
         if(node && node->neighbor_count > 0){
             printf("\nNo record found, but connected to %d neighbors:\n", node->neighbor_count);
             for(int i = 0; i < node->neighbor_count; i++){
                 printf(" - %s\n", node->neighbors[i]->phone);
             }
-            Logging_Write(LOG_INFO, "Admin analyzed number (graph found): %s", norm);
+            Logging_Write(LOG_INFO, "Admin analyzed (graph): %s", norm);
         }else{
             puts("\nNo record or relationship found.");
-            Logging_Write(LOG_INFO, "Admin analyzed number (no data): %s", norm);
+            Logging_Write(LOG_INFO, "Admin analyzed (no data): %s", norm);
         }
-
     }
 
 }
 
-// Admin Mode Main Handler
 void admin_mode(HashTable *table, GraphNode *nodes[]){
 
     while(1){
@@ -99,14 +97,14 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             float sc = atof(risk_str);
             if(sc < 0.0f || sc > 1.0f){
                 puts("Invalid risk score! Must be between 0 and 1.");
-                Logging_Write(LOG_WARN, "Admin entered invalid score for: %s", norm);
+                Logging_Write(LOG_WARN, "Admin entered invalid score: %s", norm);
                 continue;
             }
 
             int rc = atoi(rep_str);
             hash_table_insert(table, norm, sc, rc);
             printf("Added %s\n", norm);
-            Logging_Write(LOG_INFO, "Admin added record: %s (score: %.2f, reports: %d)", norm, sc, rc);
+            Logging_Write(LOG_INFO, "Admin added record: %s (%.2f, %d)", norm, sc, rc);
 
         }else if(choice == 2){
             char p1[64], p2[64];
@@ -119,21 +117,22 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             if(Normalize_Phone(p1, n1, sizeof(n1)) < 0 ||
                 Normalize_Phone(p2, n2, sizeof(n2)) < 0){
                 puts("One or both phones invalid!");
-                Logging_Write(LOG_WARN, "Admin tried linking invalid phones: %s - %s", p1, p2);
+                Logging_Write(LOG_WARN, "Admin tried linking invalid: %s - %s", p1, p2);
                 continue;
             }
 
             graph_add_edge(nodes, n1, n2);
-            printf("Linked %s \u2194 %s\n", n1, n2);
-            Logging_Write(LOG_INFO, "Admin linked numbers: %s \u2194 %s", n1, n2);
+            printf("Linked %s ↔ %s\n", n1, n2);
+            Logging_Write(LOG_INFO, "Admin linked: %s ↔ %s", n1, n2);
 
         }else if(choice == 3){
             view_pending_reports();
+
         }else if(choice == 4){
             analyze_number(table, nodes);
+
         }else{
             break;
         }
     }
-
 }
