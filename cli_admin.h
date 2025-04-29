@@ -3,11 +3,16 @@
 #include "hash_table.h"
 #include "graph.h"
 /*
- * Admin Mode
+ * Admin Mode Entry Point
  * -------------------------
- * Handles admin-side CLI interaction:
- * - Add suspicious phone record
- * - Add relationship edge
+ * Handles administrator-side CLI interaction:
+ * - Add suspicious phone records
+ * - Add relationship links between phone numbers
+ * - View pending reports submitted by users
+ * - Analyze any phone number by checking both DB and relationship graph
+ * Parameters:
+ *   table -> Pointer to initialized HashTable
+ *   nodes -> Graph node array for relationships
  */
 void admin_mode(HashTable *table, GraphNode *nodes[]);
 
