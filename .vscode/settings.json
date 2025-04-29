@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "stddef.h": "c",
-        "hash_map.h": "c"
+        "hash_map.h": "c",
+        "string.h": "c"
     }
 }

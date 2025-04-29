@@ -1,6 +1,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
-#include "utils.h"
+#include "phone_format.h"
 #define MAX_NODES 1000 // Maximum graph size
 #define MAX_NEIGHBORS 10 // Limit of neighbors per node
 /*
