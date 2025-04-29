@@ -5,6 +5,7 @@
 #include "phone_format.h"
 #include "hash_table.h"
 #include "graph.h"
+#include "logging.h"
 /*
  * Admin Mode Main Handler
  * -------------------------
@@ -36,19 +37,25 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             char norm[MAX_PHONE_LENGTH];
             if(Normalize_Phone(phone, norm, sizeof(norm)) < 0){
                 puts("Invalid phone!");
+                Logging_Write(LOG_WARN, "Admin entered invalid phone: %s", phone);
                 continue;
             }
+
             float sc = atof(risk_str);
             if(sc < 0.0f || sc > 1.0f){
                 puts("Invalid risk score! Must be between 0 and 1.");
+                Logging_Write(LOG_WARN, "Admin entered invalid score for: %s", norm);
                 continue;
             }
+
             int rc = atoi(rep_str);
 
             hash_table_insert(table, norm, sc, rc);
             printf("Added %s\n", norm);
+            Logging_Write(LOG_INFO, "Admin added record: %s (score: %.2f, reports: %d)", norm, sc, rc);
 
         }else if(choice == 2){
+            
             char p1[64], p2[64];
             printf("Phone 1: ");
             if(!fgets(p1, sizeof(p1), stdin)) break;
@@ -59,14 +66,18 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             if(Normalize_Phone(p1, n1, sizeof(n1)) < 0 || 
             Normalize_Phone(p2, n2, sizeof(n2)) < 0){
                 puts("One or both phones invalid!");
+                Logging_Write(LOG_WARN, "Admin tried linking invalid phones: %s - %s", p1, p2);
                 continue;
             }
+
             graph_add_edge(nodes, n1, n2);
             printf("Linked %s ↔ %s\n", n1, n2);
+            Logging_Write(LOG_INFO, "Admin linked numbers: %s ↔ %s", n1, n2);
 
         }else{
             break;
         }
     }
-    
+    Logging_Write(LOG_INFO, "Admin exited Admin Mode");
+
 }

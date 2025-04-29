@@ -5,6 +5,7 @@
 #include "phone_format.h"
 #include "hash_table.h"
 #include "graph.h"
+#include "logging.h"
 
 // Private Helper: Display Suspicious Score
 static void display_suspicious_score(float score){
@@ -14,9 +15,9 @@ static void display_suspicious_score(float score){
     for(int i = 0; i < 20; ++i) putchar(i < bar ? '#' : '-');
     puts("]");
 
-    if      (score > 0.8)  puts("\u26a0  HIGH RISK!\n");
-    else if (score > 0.5)  puts("\u26a0  MEDIUM RISK\n");
-    else                   puts("\u2705  LOW RISK\n");
+    if      (score > 0.8)  puts("HIGH RISK!\n");
+    else if (score > 0.5)  puts("MEDIUM RISK\n");
+    else                   puts("LOW RISK\n");
 
 }
 
@@ -28,11 +29,11 @@ static void display_scam_graph(GraphNode *node, int level){
     // Indentation
     for(int i = 0; i < level; i++) printf("  ");
 
-    printf("\u250c──────────────\u2510\n");
+    printf("┌─────────────┐\n");
     for(int i = 0; i < level; i++) printf("  ");
     printf("| %-12s |\n", node->phone);
     for(int i = 0; i < level; i++) printf("  ");
-    printf("\u2514──────\u252c──────\u2518\n");
+    printf("└─────────────┘\n");
 
     for(int i = 0; i < node->neighbor_count; i++){
         display_scam_graph(node->neighbors[i], level + 1);
@@ -51,6 +52,7 @@ static void report_number(const char *phone){
 
     fprintf(fp, "%s\n", phone);
     fclose(fp);
+    Logging_Write(LOG_INFO, "User reported number: %s", phone);
 
 }
 
@@ -62,32 +64,38 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
         printf("\nEnter phone (q to return): ");
         if(!fgets(raw, sizeof raw, stdin) || raw[0]=='q'){
             puts("");
+            Logging_Write(LOG_INFO, "User exited User Mode");
             break;
         }
 
         char norm[MAX_PHONE_LENGTH];
         if(Normalize_Phone(raw, norm, sizeof norm) < 0){
             puts("Invalid phone format!\n");
+            Logging_Write(LOG_WARN, "User entered invalid phone: %s", raw);
             continue;
         }
 
+        Logging_Write(LOG_INFO, "User searched for: %s", norm);
         ScamRecord *rec = hash_table_lookup(table, norm);
         if(rec){
             printf("\nNumber found (reported %d times)\n", rec->report_count);
             display_suspicious_score(rec->suspicious_score);
+            Logging_Write(LOG_INFO, "Phone found: %s (score: %.2f, reports: %d)", norm, rec->suspicious_score, rec->report_count);
         }else{
             if(!Is_SEA_Country(norm)){
                 puts("\nForeign (Non-SEA) number - HIGH RISK!\n");
+                Logging_Write(LOG_WARN, "Foreign number - Not SEA: %s", norm);
             }else{
                 puts("\nNot found - exploring relationship graph:\n");
+                Logging_Write(LOG_INFO, "SEA number not found in DB: %s", norm);
                 GraphNode *start = graph_get_node(nodes, norm);
                 if(start){
                     display_scam_graph(start, 0);
                 }else{
-                    puts("No relationships found.!\n");
+                    puts("No relationships found!\n");
                 }
             }
-            
+
             // ─── Ask for Report ───
             printf("Would you like to report this number? (y/n): ");
             char ans[8];
