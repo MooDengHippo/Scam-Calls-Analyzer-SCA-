@@ -2,15 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cli_admin.h"
-#include "utils.h"
-#include "hash_map.h"
+#include "phone_format.h"
+#include "hash_table.h"
 #include "graph.h"
 /*
  * Admin Mode Main Handler
  * -------------------------
  * Allows admin to add records and edges.
  */
-void admin_mode(HashMap *map, GraphNode *nodes[]){
+void admin_mode(HashTable *table, GraphNode *nodes[]){
 
     while(1){
         puts("\n--- Admin Menu ---");
@@ -18,6 +18,7 @@ void admin_mode(HashMap *map, GraphNode *nodes[]){
         puts(" 2) Add relationship edge");
         puts(" 3) Back to main menu");
         printf("Select: ");
+
         int choice = 0;
         if(scanf("%d%*c", &choice) != 1){
             choice = 3;
@@ -44,7 +45,7 @@ void admin_mode(HashMap *map, GraphNode *nodes[]){
             }
             int rc = atoi(rep_str);
 
-            hash_map_insert(map, norm, sc, rc);
+            hash_table_insert(table, norm, sc, rc);
             printf("Added %s\n", norm);
 
         }else if(choice == 2){

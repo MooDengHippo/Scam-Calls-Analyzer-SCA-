@@ -1,6 +1,6 @@
 #ifndef CLI_ADMIN_H
 #define CLI_ADMIN_H
-#include "hash_map.h"
+#include "hash_table.h"
 #include "graph.h"
 /*
  * Admin Mode
@@ -9,6 +9,6 @@
  * - Add suspicious phone record
  * - Add relationship edge
  */
-void admin_mode(HashMap *map, GraphNode *nodes[]);
+void admin_mode(HashTable *table, GraphNode *nodes[]);
 
 #endif // CLI_ADMIN_H
