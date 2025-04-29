@@ -1,5 +1,5 @@
-#ifndef HASH_MAP_H
-#define HASH_MAP_H
+#ifndef HASH_TABLE_H
+#define HASH_TABLE_H
 #include "utils.h"
 #include <stddef.h> // for size_t
 #define TABLE_SIZE 2003 // Prime number hash table size for better distribution
@@ -14,17 +14,17 @@ typedef struct ScamRecord{
 
 }ScamRecord;
 
-// Hash table mapping phone numbers to scam records
+// Hash Table mapping phone numbers to scam records
 typedef struct{
 
     ScamRecord *buckets[TABLE_SIZE];
 
-}HashMap;
+}HashTable;
 
 // Function declarations
-HashMap* hash_map_init(void);
-void hash_map_insert(HashMap *map, const char *phone, float score, int reports);
-ScamRecord* hash_map_lookup(HashMap *map, const char *phone);
-void hash_map_free(HashMap *map);
+HashTable* hash_table_init(void);
+void hash_table_insert(HashTable *table, const char *phone, float score, int reports);
+ScamRecord* hash_table_lookup(HashTable *table, const char *phone);
+void hash_table_free(HashTable *table);
 
-#endif // HASH_MAP_H
+#endif // HASH_TABLE_H

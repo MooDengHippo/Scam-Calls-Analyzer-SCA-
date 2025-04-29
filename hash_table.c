@@ -1,4 +1,4 @@
-#include "hash_map.h"
+#include "hash_table.h"
 #include <stdlib.h>
 #include <string.h>
 /*
@@ -17,13 +17,13 @@ static unsigned int hash_function(const char *key){
 
 }
 /*
- * HashMap Initialization
+ * Hash Table Initialization
  * ----------------------------------------
  * Allocates a zero-initialized HashMap
  */
-HashMap* hash_map_init(void){
+HashTable* hash_table_init(void){
 
-    return(HashMap*)calloc(1, sizeof(HashMap));
+    return(HashTable*)calloc(1, sizeof(HashTable));
 
 }
 /*
@@ -32,12 +32,12 @@ HashMap* hash_map_init(void){
  * If phone already exists --> update score + report count
  * Otherwise --> create a new ScamRecord and insert
  */
-void hash_map_insert(HashMap *map, const char *phone, float score, int reports){
+void hash_table_insert(HashTable *table, const char *phone, float score, int reports){
 
-    if(!map || !phone) return;
+    if(!table || !phone) return;
 
     unsigned int index = hash_function(phone);
-    ScamRecord *current = map->buckets[index];
+    ScamRecord *current = table->buckets[index];
 
     // Update existing record
     while(current){
@@ -57,8 +57,8 @@ void hash_map_insert(HashMap *map, const char *phone, float score, int reports){
     new_rec->phone[MAX_PHONE_LENGTH - 1] = '\0';
     new_rec->suspicious_score = score;
     new_rec->report_count = reports;
-    new_rec->next = map->buckets[index];
-    map->buckets[index] = new_rec;
+    new_rec->next = table->buckets[index];
+    table->buckets[index] = new_rec;
 
 }
 /*
@@ -66,12 +66,12 @@ void hash_map_insert(HashMap *map, const char *phone, float score, int reports){
  * ----------------------------------------
  * Returns pointer to ScamRecord if found else NULL
  */
-ScamRecord* hash_map_lookup(HashMap *map, const char *phone){
+ScamRecord* hash_table_lookup(HashTable *table, const char *phone){
 
-    if(!map || !phone) return NULL;
+    if(!table || !phone) return NULL;
 
     unsigned int index = hash_function(phone);
-    ScamRecord *current = map->buckets[index];
+    ScamRecord *current = table->buckets[index];
 
     while(current){
         if(strcmp(current->phone, phone) == 0){
@@ -83,22 +83,23 @@ ScamRecord* hash_map_lookup(HashMap *map, const char *phone){
 
 }
 /*
- * Free HashMap
+ * Free Hash Table
  * ----------------------------------------
- * Releases all memory associated with the HashMap
+ * Releases all memory associated with the Hash Table
  */
-void hash_map_free(HashMap *map){
+void hash_table_free(HashTable *table){
 
-    if(!map) return;
+    if(!table) return;
 
     for(int i = 0; i < TABLE_SIZE; ++i){
-        ScamRecord *current = map->buckets[i];
+        ScamRecord *current = table->buckets[i];
         while(current){
             ScamRecord *next = current->next;
             free(current);
             current = next;
         }
     }
-    free(map);
+    
+    free(table);
 
 }
