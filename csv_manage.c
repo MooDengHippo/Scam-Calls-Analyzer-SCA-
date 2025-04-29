@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "csv_manage.h"
-#include "utils.h"
-#include "hash_map.h"
+#include "phone_format.h"
+#include "hash_table.h"
 /*
  * Trim
  * -------------------------
  * Remove leading and trailing whitespace (spaces, tabs, newlines).
  * Parameters:
- *   str - Input string to trim
+ *   str -> Input string to trim
  * Returns:
  *   A pointer to the trimmed string
  */
@@ -22,7 +22,7 @@ static char *trim(char *s){
 
 }
 /*
- * Read CSV and populate HashMap and Graph structure
+ * Read CSV and populate Hash Table and Graph structure
  * - Format:
  * R, <phone>, <score 0‑1>, <reports> // Record of suspicious number
  * E, <phoneA>, <phoneB>              // Relationship between numbers
@@ -30,7 +30,7 @@ static char *trim(char *s){
  * - Boosts risk if number is not Thai (+66)
  *   If not SEA --> even higher risk boost
  */
-int csv_read_data(const char *fname, HashMap *map, GraphNode *nodes[]){
+int csv_read_data(const char *fname, HashTable *table, GraphNode *nodes[]){
 
     FILE *fp = fopen(fname, "r");
     if(!fp){
@@ -72,7 +72,7 @@ int csv_read_data(const char *fname, HashMap *map, GraphNode *nodes[]){
                 }
             }
 
-            hash_map_insert(map, norm, sc, rc);
+            hash_table_insert(table, norm, sc, rc);
             cnt++;
 
         }else if(strcmp(tok, "E") == 0){
@@ -100,16 +100,16 @@ int csv_read_data(const char *fname, HashMap *map, GraphNode *nodes[]){
  * - Format: R,<phone>,<score>,<report_count>
  * - Used on program exit to persist data
  */
-int csv_write_data(const char *fname, HashMap *map){
+int csv_write_data(const char *fname, HashTable *table){
 
     FILE *fp = fopen(fname, "w");
     if(!fp){
-        perror("csv write");
+        perror("CSV write");
         return -1;
     }
 
     for(int i = 0; i < TABLE_SIZE; ++i){
-        ScamRecord *rec = map->buckets[i];
+        ScamRecord *rec = table->buckets[i];
         while(rec){
             fprintf(fp, "R,%s,%.2f,%d\n", rec->phone, rec->suspicious_score, rec->report_count);
             rec = rec->next;
