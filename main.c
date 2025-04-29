@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "csv_manage.h"
-#include "hash_map.h"
+#include "hash_table.h"
 #include "graph.h"
-#include "utils.h"
+#include "phone_format.h"
 #include "cli_user.h"
 #include "cli_admin.h"
+
 /* ───── CLI Options ───── */
 static void print_main_menu(void){
 
@@ -20,19 +21,20 @@ static void print_main_menu(void){
     printf("\nEnter choice: ");
 
 }
-/* ───── main program ───── */
+
+/* ───── Main Program ───── */
 int main(void){
 
     // 1) Core structures
-    HashMap   *map   = hash_map_init();
+    HashTable *table   = hash_table_init();
     GraphNode *nodes[MAX_NODES] = {0};
 
     // 2) Load CSV
     const char *DB_FILE = "data/scam_numbers.csv";
-    int rows = csv_read_data(DB_FILE, map, nodes);
+    int rows = csv_read_data(DB_FILE, table, nodes);
     if(rows < 0){
         fprintf(stderr, "Error !!!: Failed to load data from %s\n", DB_FILE);
-        hash_map_free(map);
+        hash_table_free(table);
         return EXIT_FAILURE;
     }
 
@@ -43,9 +45,9 @@ int main(void){
         if(scanf("%d%*c", &choice) != 1) break;
 
         if(choice == 1){
-            user_mode(map, nodes);
+            user_mode(table, nodes);
         }else if(choice == 2){
-            admin_mode(map, nodes);
+            admin_mode(table, nodes);
         }else if(choice == 3){
             break;
         }else{
@@ -54,7 +56,7 @@ int main(void){
     }
 
     // 4) Persist data
-    csv_write_data("data/scam_numbers.csv", map);
+    csv_write_data("data/scam_numbers.csv", table);
 
     // 5) Cleanup GraphNodes
     for(int i = 0; i < MAX_NODES; ++i){
@@ -63,7 +65,7 @@ int main(void){
         }
     }
 
-    hash_map_free(map);
+    hash_table_free(table);
     puts("See you later, Bye!!!");
     return 0;
 }
