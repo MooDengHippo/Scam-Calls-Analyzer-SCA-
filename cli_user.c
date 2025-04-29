@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cli_user.h"
-#include "utils.h"
-#include "hash_map.h"
+#include "phone_format.h"
+#include "hash_table.h"
 #include "graph.h"
+
 // Private Helper: Display Suspicious Score
 static void display_suspicious_score(float score){
 
@@ -18,6 +19,7 @@ static void display_suspicious_score(float score){
     else                   puts("\u2705  LOW RISK\n");
 
 }
+
 // Private Helper: Display Relationship Graph 
 static void display_scam_graph(GraphNode *node, int level){
 
@@ -37,6 +39,7 @@ static void display_scam_graph(GraphNode *node, int level){
     }
 
 }
+
 // Private Helper: Report Number
 static void report_number(const char *phone){
 
@@ -50,8 +53,9 @@ static void report_number(const char *phone){
     fclose(fp);
 
 }
+
 // User Mode Main Handler
-void user_mode(HashMap *map, GraphNode *nodes[]){
+void user_mode(HashTable *table, GraphNode *nodes[]){
 
     while(1){
         char raw[64];
@@ -67,7 +71,7 @@ void user_mode(HashMap *map, GraphNode *nodes[]){
             continue;
         }
 
-        ScamRecord *rec = hash_map_lookup(map, norm);
+        ScamRecord *rec = hash_table_lookup(table, norm);
         if(rec){
             printf("\n\ud83d\udccc Number found (reported %d times)\n", rec->report_count);
             display_suspicious_score(rec->suspicious_score);
@@ -83,6 +87,7 @@ void user_mode(HashMap *map, GraphNode *nodes[]){
                     puts("No relationships found.!\n");
                 }
             }
+            
             // ─── Ask for Report ───
             printf("Would you like to report this number? (y/n): ");
             char ans[8];

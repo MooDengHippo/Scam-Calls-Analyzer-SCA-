@@ -1,6 +1,6 @@
 #ifndef CLI_USER_H
 #define CLI_USER_H
-#include "hash_map.h"
+#include "hash_table.h"
 #include "graph.h"
 /*
  * User Mode
@@ -10,6 +10,6 @@
  * - Suspicious score visualization
  * - Scam network relationship display
  */
-void user_mode(HashMap *map, GraphNode *nodes[]);
+void user_mode(HashTable *table, GraphNode *nodes[]);
 
 #endif // CLI_USER_H
