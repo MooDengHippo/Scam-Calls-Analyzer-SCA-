@@ -169,7 +169,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
 
             graph_add_edge(nodes, n1, n2);
             printf("Linked %s ↔ %s\n", n1, n2);
-            Logging_Write(LOG_INFO, "Admin linked: %s ↔ %s", n1, n2);
+            Logging_Write(LOG_INFO, "Admin linked: %s <--> %s", n1, n2);
 
         }else if(choice == 3) {
             view_pending_reports();
