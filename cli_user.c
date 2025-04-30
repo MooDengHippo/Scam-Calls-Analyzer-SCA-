@@ -8,6 +8,15 @@
 #include "graph.h"
 #include "logging.h"
 
+// Convert suspicious score to textual risk level
+static const char* get_risk_level_description(float score){
+    if(score >= 0.81f) return "SEVERE";
+    else if(score >= 0.61f) return "HIGH";
+    else if(score >= 0.41f) return "MEDIUM";
+    else if(score >= 0.21f) return "LOW";
+    else return "VERY LOW";
+}
+
 // Display suspicious score as a bar
 static void display_suspicious_score(float score){
 
@@ -16,9 +25,7 @@ static void display_suspicious_score(float score){
     for(int i = 0; i < 20; ++i)
         putchar(i < bar ? '#' : '-');
     puts("]");
-    if      (score > 0.8f) puts("HIGH RISK!\n");
-    else if (score > 0.5f) puts("MEDIUM RISK\n");
-    else                   puts("LOW RISK\n");
+    printf("Risk Level: %s\n\n", get_risk_level_description(score));
 
 }
 
