@@ -8,7 +8,7 @@
  * Handles administrator-side CLI interaction:
  * - Add suspicious phone records
  * - Add relationship links between phone numbers
- * - View pending reports submitted by users
+ * - View and accept pending reports submitted by users (directly applies to DB)
  * - Analyze any phone number by checking both DB and relationship graph
  * Parameters:
  *   table -> Pointer to initialized HashTable

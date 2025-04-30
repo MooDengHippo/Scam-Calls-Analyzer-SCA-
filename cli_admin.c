@@ -7,22 +7,45 @@
 #include "graph.h"
 #include "logging.h"
 #define PENDING_FILE "data/pending_reports.csv"
-#define ARCHIVE_FILE "data/reports_archive.csv"
 
-static float estimate_score(const char *phone, GraphNode *nodes[], HashTable *table){
-    float base = calculate_score(phone, 0);
-    GraphNode *node = graph_get_node(nodes, phone);
-    if(node){
-        float tot = 0; int cnt = 0;
-        for(int i = 0; i < node->neighbor_count; ++i){
-            ScamRecord *r = hash_table_lookup(table, node->neighbors[i]->phone);
-            if(r){ tot += r->suspicious_score; cnt++; }
-        }
-        if(cnt) base = fmaxf(base, tot / cnt);
+/*
+ * Process one pending report:
+ * - Validate phone format
+ * - Add to database or update report count
+ * - Recalculate score
+ */
+static void accept_pending_report(const char *line, HashTable *table){
+    char copy[128];
+    strncpy(copy, line, sizeof(copy));
+    char *phone_token = strtok(copy, ",\n");
+    if(!phone_token) return;
+
+    char norm[MAX_PHONE_LENGTH];
+    if(Normalize_Phone(phone_token, norm, sizeof(norm)) < 0){
+        printf("Invalid phone format: %s\n", phone_token);
+        Logging_Write(LOG_WARN, "Admin tried to accept invalid phone: %s", phone_token);
+        return;
     }
-    return base > 1.0f ? 1.0f : base;
+
+    ScamRecord *rec = hash_table_lookup(table, norm);
+    if(rec){
+        rec->report_count++;
+        rec->suspicious_score = calculate_score(norm, rec->report_count);
+        printf("[Updated] %s now has %d reports and score %.2f\n", norm, rec->report_count, rec->suspicious_score);
+        Logging_Write(LOG_INFO, "Accepted report updated existing: %s (%.2f, %d)", norm, rec->suspicious_score, rec->report_count);
+    }else{
+        float score = calculate_score(norm, 1);
+        hash_table_insert(table, norm, score, 1);
+        printf("[Added] New record %s with 1 report and score %.2f\n", norm, score);
+        Logging_Write(LOG_INFO, "Accepted report added new: %s (%.2f, 1)", norm, score);
+    }
 }
 
+/*
+ * Show and handle user-submitted pending reports
+ * - Admin selects index to accept
+ * - The report is applied to DB and removed from queue
+ */
 static void view_pending_reports(HashTable *table){
     FILE *fp = fopen(PENDING_FILE, "r");
     if(!fp){
@@ -31,65 +54,46 @@ static void view_pending_reports(HashTable *table){
         return;
     }
 
-    puts("\n--- Pending Reports ---");
     char lines[100][128];
     int line_num = 0;
+    puts("\n--- Pending Reports ---");
     while(fgets(lines[line_num], sizeof(lines[line_num]), fp)){
         printf(" %d) %s", line_num + 1, lines[line_num]);
         line_num++;
     }
     fclose(fp);
-    Logging_Write(LOG_INFO, "Admin viewed pending reports");
-
     if(line_num == 0){ puts("No entries to process."); return; }
+    Logging_Write(LOG_INFO, "Admin viewed pending reports");
 
     printf("\nSelect report number to accept (q to skip): ");
     char input[16];
-    if(!fgets(input, sizeof(input), stdin)) return;
+    if(!fgets(input, sizeof input, stdin)) return;
     if(input[0] == 'q' || input[0] == 'Q') return;
+
     int choice = atoi(input);
     if(choice <= 0 || choice > line_num){ puts("Invalid selection."); return; }
 
-    char accepted_line[128];
-    strcpy(accepted_line, lines[choice - 1]);
-    char *phone_token = strtok(accepted_line, ",\n");
-    if(phone_token){
-        char norm[MAX_PHONE_LENGTH];
-        if(Normalize_Phone(phone_token, norm, sizeof(norm)) == 0){
-            ScamRecord *rec = hash_table_lookup(table, norm);
-            if(rec){
-                rec->report_count++;
-                rec->suspicious_score = calculate_score(norm, rec->report_count);
-                printf("[Updated] %s now has %d reports and score %.2f\n", norm, rec->report_count, rec->suspicious_score);
-                Logging_Write(LOG_INFO, "Accepted report applied to existing: %s (%.2f, %d)", norm, rec->suspicious_score, rec->report_count);
-            }else{
-                float score = calculate_score(norm, 1);
-                hash_table_insert(table, norm, score, 1);
-                printf("[Added] New record %s with 1 report and score %.2f\n", norm, score);
-                Logging_Write(LOG_INFO, "Accepted report added new record: %s (%.2f, 1)", norm, score);
-            }
-        }
-    }
+    // Apply the report
+    accept_pending_report(lines[choice - 1], table);
 
+    // Rewrite the file without the accepted line
     FILE *out = fopen("data/tmp.csv", "w");
-    FILE *arc = fopen(ARCHIVE_FILE, "a");
-    if(!out || !arc){
-        puts("File error during processing!");
-        if(out) fclose(out);
-        if(arc) fclose(arc);
+    if(!out){
+        puts("File error during cleanup!");
         return;
     }
     for(int i = 0; i < line_num; ++i){
-        if(i == choice - 1){ fputs(lines[i], arc); } 
-        else { fputs(lines[i], out); }
+        if(i != choice - 1){ fputs(lines[i], out); }
     }
     fclose(out);
-    fclose(arc);
     remove(PENDING_FILE);
     rename("data/tmp.csv", PENDING_FILE);
-    puts("Report accepted, archived, and applied to database.");
+    puts("Report accepted and applied to database.");
 }
 
+/*
+ * Analyze phone number and offer to add/increment it
+ */
 static void analyze_number(HashTable *table, GraphNode *nodes[]){
     char raw[64];
     printf("Enter phone to analyze (or 'q' to cancel): ");
@@ -134,6 +138,9 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
     }
 }
 
+/*
+ * Admin menu logic
+ */
 void admin_mode(HashTable *table, GraphNode *nodes[]){
     while(1){
         puts("\n--- Admin Menu ---");
