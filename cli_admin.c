@@ -43,12 +43,13 @@ static void view_pending_reports(HashTable *table){
 
     if(line_num == 0){ puts("No entries to process."); return; }
 
-    printf("\nSelect report number to accept (0 to skip): ");
-    int choice = 0;
-    scanf("%d%*c", &choice);
-    if(choice <= 0 || choice > line_num) return;
+    printf("\nSelect report number to accept (q to skip): ");
+    char input[16];
+    if(!fgets(input, sizeof(input), stdin)) return;
+    if(input[0] == 'q' || input[0] == 'Q') return;
+    int choice = atoi(input);
+    if(choice <= 0 || choice > line_num){ puts("Invalid selection."); return; }
 
-    // Parse accepted line to extract phone number
     char accepted_line[128];
     strcpy(accepted_line, lines[choice - 1]);
     char *phone_token = strtok(accepted_line, ",\n");
@@ -70,7 +71,6 @@ static void view_pending_reports(HashTable *table){
         }
     }
 
-    // Rewrite file excluding accepted line
     FILE *out = fopen("data/tmp.csv", "w");
     FILE *arc = fopen(ARCHIVE_FILE, "a");
     if(!out || !arc){
@@ -79,7 +79,6 @@ static void view_pending_reports(HashTable *table){
         if(arc) fclose(arc);
         return;
     }
-
     for(int i = 0; i < line_num; ++i){
         if(i == choice - 1){ fputs(lines[i], arc); } 
         else { fputs(lines[i], out); }
@@ -121,18 +120,17 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
     }else{
         GraphNode *node = graph_get_node(nodes, norm);
         if(node && node->neighbor_count){
-            printf("\nNo record found, but connected to %d neighbors:\n",
-                   node->neighbor_count);
+            printf("\nNo record found, but connected to %d neighbors:\n", node->neighbor_count);
             for(int i=0; i<node->neighbor_count; ++i)
                 printf(" - %s\n", node->neighbors[i]->phone);
         }else{
             puts("\nNo record or relationship found.");
         }
 
-        float est = calculate_score(norm, 1);
-        hash_table_insert(table, norm, est, 1);
-        printf("Added new record with 1 report and score: %.2f\n", est);
-        Logging_Write(LOG_INFO, "Admin added new record via analyze: %s (%.2f, 1)", norm, est);
+        float est = calculate_score(norm, 0);
+        hash_table_insert(table, norm, est, 0);
+        printf("Added new record with 0 reports and score: %.2f\n", est);
+        Logging_Write(LOG_INFO, "Admin added new record via analyze: %s (%.2f, 0)", norm, est);
     }
 }
 
@@ -165,15 +163,23 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
 
             ScamRecord *old = hash_table_lookup(table, norm);
             if(old){
-                old->report_count++;
-                old->suspicious_score = calculate_score(norm, old->report_count);
-                printf("Updated existing record: %s (Score: %.2f, Reports: %d)\n", norm, old->suspicious_score, old->report_count);
-                Logging_Write(LOG_INFO, "Admin incremented report on existing: %s (%.2f, %d)", norm, old->suspicious_score, old->report_count);
+                printf("This number already exists with score %.2f and reports %d\n",
+                       old->suspicious_score, old->report_count);
+                printf("Do you want to increase the report count? (y/n): ");
+                char yn[8];
+                if(fgets(yn, sizeof yn, stdin) && (yn[0] == 'y' || yn[0] == 'Y')){
+                    old->report_count++;
+                    old->suspicious_score = calculate_score(norm, old->report_count);
+                    printf("Updated record: %s (Score: %.2f, Reports: %d)\n",
+                           norm, old->suspicious_score, old->report_count);
+                    Logging_Write(LOG_INFO, "Admin incremented report on existing: %s (%.2f, %d)", norm, old->suspicious_score, old->report_count);
+                } else {
+                    puts("No changes made.");
+                }
             } else {
-                float score = calculate_score(norm, 1);
-                hash_table_insert(table, norm, score, 1);
-                printf("Added new record: %s (Score: %.2f, Reports: 1)\n", norm, score);
-                Logging_Write(LOG_INFO, "Admin added new record: %s (%.2f, 1)", norm, score);
+                hash_table_insert(table, norm, calculate_score(norm, 0), 0);
+                printf("Added new record: %s (Score: %.2f, Reports: 0)\n", norm, calculate_score(norm, 0));
+                Logging_Write(LOG_INFO, "Admin added new record: %s (%.2f, 0)", norm, calculate_score(norm, 0));
             }
 
         }else if(choice == 2){
@@ -197,7 +203,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
         }else if(choice == 3){
             printf("Phone to delete (q to cancel): ");
             char dp[64];
-            if(!fgets(dp, sizeof dp, stdin) || dp[0]=='q') continue;
+            if(!fgets(dp, sizeof dp, stdin) || dp[0]=='q' || dp[0]=='Q') continue;
             dp[strcspn(dp, "\n")] = 0;
 
             char dn[MAX_PHONE_LENGTH];
