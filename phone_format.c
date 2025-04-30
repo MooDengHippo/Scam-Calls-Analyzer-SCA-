@@ -97,3 +97,24 @@ int Is_SEA_Country(const char *normalized){
     return 0;
     
 }
+/*
+ * Calculate Score
+ * -------------------------
+ * Compute risk score based on region and number pattern
+ * Used across csv_manage and admin module
+ */
+float calculate_score(const char *phone, int report_count){
+
+    if(!Is_SEA_Country(phone)) return 1.0f;
+
+    if(strncmp(phone, "+66", 3) == 0){
+        if(strncmp(phone, "+662", 4) == 0) return fminf(1.0f, 0.5f + 0.05f * report_count);
+        return fminf(1.0f, 0.1f + 0.05f * report_count);
+    }
+
+    if(strncmp(phone, "+855", 4)==0 || strncmp(phone, "+95", 3)==0 || strncmp(phone, "+856", 4)==0)
+        return fminf(1.0f, 0.7f + 0.05f * report_count);
+
+    return fminf(1.0f, 0.8f + 0.05f * report_count);
+
+}

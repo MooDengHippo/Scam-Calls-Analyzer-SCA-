@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <string.h>
+#include <math.h>
 #define MAX_PHONE_LENGTH 32
 /*
  * Normalize Phone
@@ -26,5 +27,11 @@ int Get_Country_Code(const char *normalized, char *code_out, size_t code_out_siz
  * Returns 1 if yes, 0 otherwise.
  */
 int Is_SEA_Country(const char *normalized);
+/*
+ * Calculate Score
+ * -------------------------
+ * Assign suspicious score based on phone pattern and report count
+ */
+float calculate_score(const char *phone, int report_count);
 
-#endif // PHONE_FORMAT_H 
+#endif // PHONE_FORMAT_H

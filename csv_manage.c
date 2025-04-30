@@ -4,6 +4,19 @@
 #include "csv_manage.h"
 #include "phone_format.h"
 #include "hash_table.h"
+// Calculate risk score based on phone pattern and report count
+static float calculate_score(const char *phone, int report_count){
+
+    if (!Is_SEA_Country(phone)) return 1.0f;
+    if (strncmp(phone, "+66", 3) == 0) {
+        if (strncmp(phone, "+662", 4) == 0) return fminf(1.0f, 0.5f + 0.05f * report_count);
+        return fminf(1.0f, 0.1f + 0.05f * report_count);
+    }
+    if (strncmp(phone, "+855", 4) == 0 || strncmp(phone, "+95", 3) == 0 || strncmp(phone, "+856", 4) == 0)
+        return fminf(1.0f, 0.7f + 0.05f * report_count);
+    return fminf(1.0f, 0.8f + 0.05f * report_count);
+
+}
 /*
  * Trim
  * -------------------------
@@ -24,8 +37,8 @@ static char *trim(char *s){
 /*
  * Read CSV and populate Hash Table and Graph structure
  * - Format:
- * R, <phone>, <score 0‑1>, <reports> // Record of suspicious number
- * E, <phoneA>, <phoneB>              // Relationship between numbers
+ *   R, <phone>, <score 0‑1>, <reports> // Record of suspicious number
+ *   E, <phoneA>, <phoneB>              // Relationship between numbers
  * - Automatically normalize phone numbers
  * - Boosts risk if number is not Thai (+66)
  *   If not SEA --> even higher risk boost
@@ -61,16 +74,8 @@ int csv_read_data(const char *fname, HashTable *table, GraphNode *nodes[]){
             char norm[MAX_PHONE_LENGTH];
             if(Normalize_Phone(p, norm, sizeof(norm)) < 0) continue;
 
-            float sc = atof(score);
             int rc = rep ? atoi(trim(rep)) : 1;
-
-            // Customized risk boosting logic
-            if(strncmp(norm, "+66", 3) != 0){
-                sc = sc < 0.5f ? 0.5f : sc;
-                if(!Is_SEA_Country(norm)){
-                    sc = sc < 0.7f ? 0.7f : sc;
-                }
-            }
+            float sc = calculate_score(norm, rc);
 
             hash_table_insert(table, norm, sc, rc);
             cnt++;
