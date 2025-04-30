@@ -46,8 +46,8 @@ static void display_scam_graph(GraphNode *node, int level){
 
 }
 
-// Append a report to pending_reports.csv
-static void report_number(const char *phone){
+// Append a report to pending_reports.csv and update report count
+static void report_number(const char *phone, HashTable *table){
 
     FILE *fp = fopen("data/pending_reports.csv", "a");
     if(!fp){ perror("Could not open pending_reports.csv"); return; }
@@ -58,6 +58,15 @@ static void report_number(const char *phone){
     fprintf(fp, "%s,%s\n", phone, timestamp);
     fclose(fp);
     Logging_Write(LOG_INFO, "User reported number: %s", phone);
+
+    // Update or insert into hash table with incremented report count
+    ScamRecord *rec = hash_table_lookup(table, phone);
+    if(rec){
+        rec->report_count++;
+        rec->suspicious_score = calculate_score(phone, rec->report_count);
+    }else{
+        hash_table_insert(table, phone, calculate_score(phone, 1), 1);
+    }
 
 }
 
@@ -94,7 +103,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
             char ans2[8];
             if(fgets(ans2, sizeof ans2, stdin)
                && (ans2[0]=='y' || ans2[0]=='Y')){
-                report_number(norm);
+                report_number(norm, table);
                 puts("Number sent to admin. Thank you!\n");
             }
 
@@ -122,7 +131,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
             char ans[8];
             if(fgets(ans, sizeof ans, stdin)
                && (ans[0] == 'y' || ans[0] == 'Y')){
-                report_number(norm);
+                report_number(norm, table);
                 puts("Number reported. Thank you!\n");
                 Logging_Write(LOG_INFO, "User reported unknown number: %s", norm);
             }

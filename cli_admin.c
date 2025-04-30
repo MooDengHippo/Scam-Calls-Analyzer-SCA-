@@ -59,20 +59,17 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
                rec->phone, rec->suspicious_score, rec->report_count);
         Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
 
-        printf("Do you want to update this record? (y/n): ");
+        printf("Do you want to update this record's risk score? (y/n): ");
         char ans[8];
         if(fgets(ans, sizeof ans, stdin) && (ans[0]=='y' || ans[0]=='Y')){
-            char risk_str[16], rep_str[16];
+            char risk_str[16];
             printf("New Risk score (0-1): ");
             if(!fgets(risk_str, sizeof risk_str, stdin)) return;
-            printf("New Report count: ");
-            if(!fgets(rep_str, sizeof rep_str, stdin)) return;
 
             float sc = atof(risk_str);
-            int rc = atoi(rep_str);
-            hash_table_insert(table, norm, sc, rc);
-            printf("Record updated.\n");
-            Logging_Write(LOG_INFO, "Admin updated record: %s (%.2f, %d)", norm, sc, rc);
+            hash_table_insert(table, norm, sc, rec->report_count);
+            printf("Risk score updated.\n");
+            Logging_Write(LOG_INFO, "Admin updated score: %s (%.2f, %d)", norm, sc, rec->report_count);
         }
     }else{
         GraphNode *node = graph_get_node(nodes, norm);
@@ -108,7 +105,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
         if(scanf("%d%*c", &choice) != 1) choice = 6;
 
         if(choice == 1){
-            char phone[64], risk_str[16], rep_str[16];
+            char phone[64], risk_str[16];
             printf("Phone: ");
             if(!fgets(phone, sizeof phone, stdin)) break;
             phone[strcspn(phone, "\n")] = 0;
@@ -121,7 +118,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
 
             ScamRecord *old = hash_table_lookup(table, norm);
             if(old){
-                printf("Record exists (score %.2f, reports %d). Update? (y/n): ",
+                printf("Record exists (score %.2f, reports %d). Update risk score? (y/n): ",
                        old->suspicious_score, old->report_count);
                 char ua[8];
                 if(fgets(ua, sizeof ua, stdin)
@@ -133,11 +130,9 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
 
             printf("Risk score (0-1): ");
             if(!fgets(risk_str, sizeof risk_str, stdin)) break;
-            printf("Report count: ");
-            if(!fgets(rep_str, sizeof rep_str, stdin)) break;
 
             float sc = atof(risk_str);
-            int   rc = atoi(rep_str);
+            int rc = old ? old->report_count : 0; // Keep report count untouched
             hash_table_insert(table, norm, sc, rc);
             printf("%s record %s.\n", old ? "Updated" : "Added", norm);
             Logging_Write(LOG_INFO, "Admin %s record: %s (%.2f, %d)",
@@ -187,5 +182,5 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             break;
         }
     }
-    
+
 }
