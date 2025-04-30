@@ -7,13 +7,23 @@
 #include "graph.h"
 #include "logging.h"
 
-// Estimate score based on graph & country
+// Custom score calculation based on phone type and reports
+static float calculate_score(const char *phone, int report_count){
+
+    if(!Is_SEA_Country(phone)) return 1.0f;
+    if(strncmp(phone, "+66", 3) == 0){
+        if (strncmp(phone, "+662", 4) == 0) return fminf(1.0f, 0.5f + 0.05f * report_count);
+        return fminf(1.0f, 0.1f + 0.05f * report_count);
+    }
+    if(strncmp(phone, "+855", 4) == 0 || strncmp(phone, "+95", 3) == 0 || strncmp(phone, "+856", 4) == 0)
+        return fminf(1.0f, 0.7f + 0.05f * report_count);
+    return fminf(1.0f, 0.8f + 0.05f * report_count);
+
+}
+
 static float estimate_score(const char *phone, GraphNode *nodes[], HashTable *table){
 
-    float base = 0.3f;
-    if(!Is_SEA_Country(phone))          base = 0.7f;
-    else if(strncmp(phone, "+66", 3))   base = 0.5f;
-
+    float base = calculate_score(phone, 0);
     GraphNode *node = graph_get_node(nodes, phone);
     if(node){
         float tot = 0; int cnt = 0;
@@ -21,13 +31,12 @@ static float estimate_score(const char *phone, GraphNode *nodes[], HashTable *ta
             ScamRecord *r = hash_table_lookup(table, node->neighbors[i]->phone);
             if(r){ tot += r->suspicious_score; cnt++; }
         }
-        if(cnt) base = (tot/cnt) > base ? (tot/cnt) : base;
+        if(cnt) base = fmaxf(base, tot / cnt);
     }
     return base > 1.0f ? 1.0f : base;
 
 }
 
-// Display and optionally delete pending reports
 static void view_pending_reports(){
 
     FILE *fp = fopen("data/pending_reports.csv", "r");
@@ -45,7 +54,6 @@ static void view_pending_reports(){
 
 }
 
-// Analyze a phone in DB or graph
 static void analyze_number(HashTable *table, GraphNode *nodes[]){
 
     char raw[64];
@@ -64,6 +72,22 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
         printf("\nPhone: %s\nRisk Score: %.2f\nReports: %d\n",
                rec->phone, rec->suspicious_score, rec->report_count);
         Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
+
+        printf("Do you want to update this record? (y/n): ");
+        char ans[8];
+        if(fgets(ans, sizeof ans, stdin) && (ans[0]=='y' || ans[0]=='Y')){
+            char risk_str[16], rep_str[16];
+            printf("New Risk score (0-1): ");
+            if(!fgets(risk_str, sizeof risk_str, stdin)) return;
+            printf("New Report count: ");
+            if(!fgets(rep_str, sizeof rep_str, stdin)) return;
+
+            float sc = atof(risk_str);
+            int rc = atoi(rep_str);
+            hash_table_insert(table, norm, sc, rc);
+            printf("Record updated.\n");
+            Logging_Write(LOG_INFO, "Admin updated record: %s (%.2f, %d)", norm, sc, rc);
+        }
     }else{
         GraphNode *node = graph_get_node(nodes, norm);
         if(node && node->neighbor_count){
@@ -77,13 +101,11 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
 
         float est = estimate_score(norm, nodes, table);
         printf("Estimated suspicious score: %.2f\n", est);
-        // Note: insertion now only via Add/Update menu
         Logging_Write(LOG_INFO, "Admin analyzed (not found): %s", norm);
     }
 
 }
 
-// Admin CLI loop
 void admin_mode(HashTable *table, GraphNode *nodes[]){
 
     while(1){
@@ -111,7 +133,6 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                 continue;
             }
 
-            // Check existing
             ScamRecord *old = hash_table_lookup(table, norm);
             if(old){
                 printf("Record exists (score %.2f, reports %d). Update? (y/n): ",
@@ -124,8 +145,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                 }
             }
 
-            // Read new values
-            printf("Risk score (0–1): ");
+            printf("Risk score (0-1): ");
             if(!fgets(risk_str, sizeof risk_str, stdin)) break;
             printf("Report count: ");
             if(!fgets(rep_str, sizeof rep_str, stdin)) break;
@@ -138,8 +158,23 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                           old ? "updated" : "added", norm, sc, rc);
 
         }else if(choice == 2){
-            // existing relation logic…
-            // graph_add_edge(nodes, phoneA, phoneB);
+            char phoneA[64], phoneB[64];
+            printf("Phone A: ");
+            if(!fgets(phoneA, sizeof phoneA, stdin)) continue;
+            printf("Phone B: ");
+            if(!fgets(phoneB, sizeof phoneB, stdin)) continue;
+
+            char normA[MAX_PHONE_LENGTH], normB[MAX_PHONE_LENGTH];
+            if(Normalize_Phone(phoneA, normA, sizeof(normA)) < 0 ||
+               Normalize_Phone(phoneB, normB, sizeof(normB)) < 0){
+                puts("Invalid phone format!");
+                continue;
+            }
+
+            graph_add_edge(nodes, normA, normB);
+            printf("Linked %s <--> %s\n", normA, normB);
+            Logging_Write(LOG_INFO, "Admin linked %s <--> %s", normA, normB);
+
         }else if(choice == 3){
             printf("Phone to delete (q to cancel): ");
             char dp[64];
@@ -160,12 +195,11 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
 
         }else if(choice == 4){
             view_pending_reports();
-
         }else if(choice == 5){
             analyze_number(table, nodes);
-
         }else{
             break;
         }
     }
+    
 }
