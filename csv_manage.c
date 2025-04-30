@@ -4,6 +4,7 @@
 #include "csv_manage.h"
 #include "phone_format.h"
 #include "hash_table.h"
+
 /*
  * Trim
  * -------------------------
@@ -14,13 +15,12 @@
  *   A pointer to the trimmed string
  */
 static char *trim(char *s){
-
     while(*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r') s++;
     char *e = s + strlen(s) - 1;
     while(e > s && (*e == ' ' || *e == '\t' || *e == '\n' || *e == '\r')) *e-- = '\0';
     return s;
-
 }
+
 /*
  * Read CSV and populate Hash Table and Graph structure
  * - Format:
@@ -31,7 +31,6 @@ static char *trim(char *s){
  *   If not SEA --> even higher risk boost
  */
 int csv_read_data(const char *fname, HashTable *table, GraphNode *nodes[]){
-
     FILE *fp = fopen(fname, "r");
     if(!fp){
         perror("CSV open!");
@@ -85,15 +84,14 @@ int csv_read_data(const char *fname, HashTable *table, GraphNode *nodes[]){
     }
     fclose(fp);
     return cnt;
-
 }
+
 /*
  * Write current map data back to CSV
  * - Format: R,<phone>,<score>,<report_count>
  * - Used on program exit to persist data
  */
 int csv_write_data(const char *fname, HashTable *table){
-
     FILE *fp = fopen(fname, "w");
     if(!fp){
         perror("CSV write");
@@ -109,5 +107,33 @@ int csv_write_data(const char *fname, HashTable *table){
     }
     fclose(fp);
     return 0;
+}
 
+/*
+ * Write graph relationships to CSV
+ * - Appends edge information to file as: E,<phone1>,<phone2>
+ * - Prevents duplicate bidirectional writes (A,B and B,A)
+ */
+int csv_write_edges(const char *fname, GraphNode *nodes[]){
+    FILE *fp = fopen(fname, "a"); // Append mode
+    if(!fp){
+        perror("CSV write edge");
+        return -1;
+    }
+
+    for(int i = 0; i < MAX_NODES; ++i){
+        GraphNode *n = nodes[i];
+        if(!n) continue;
+
+        for(int j = 0; j < n->neighbor_count; ++j){
+            GraphNode *nb = n->neighbors[j];
+
+            // Avoid writing duplicate edge in both directions
+            if(strcmp(n->phone, nb->phone) < 0){
+                fprintf(fp, "E,%s,%s\n", n->phone, nb->phone);
+            }
+        }
+    }
+    fclose(fp);
+    return 0;
 }
