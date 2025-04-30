@@ -20,8 +20,10 @@ int csv_read_data(const char *fname, HashTable *map, GraphNode *nodes[]);
  */
 int csv_write_data(const char *fname, HashTable *map);
 /*
- * Appends graph edge relationships to CSV file.
- * Format: E,<phone1>,<phone2>
+ * Append all graph edges (relationships) to CSV
+ * - Appends after the scam record data
+ * - Format:
+ *    E,<phone1>,<phone2>
  */
 int csv_write_edges(const char *fname, GraphNode *nodes[]);
 
