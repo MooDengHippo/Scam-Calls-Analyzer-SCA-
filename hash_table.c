@@ -83,6 +83,34 @@ ScamRecord* hash_table_lookup(HashTable *table, const char *phone){
 
 }
 /*
+ * Delete Record by Phone Number
+ * ----------------------------------------
+ * Removes a scam record from the hash table.
+ * Returns 1 if successfully deleted, 0 if not found.
+ */
+int hash_table_delete(HashTable *table, const char *phone){
+
+    if(!table || !phone) return 0;
+
+    unsigned int index = hash_function(phone);
+    ScamRecord *prev = NULL;
+    ScamRecord *curr = table->buckets[index];
+
+    while(curr){
+        if(strcmp(curr->phone, phone) == 0){
+            if(prev) prev->next = curr->next;
+            else      table->buckets[index] = curr->next;
+            free(curr);
+            return 1;
+        }
+        prev = curr;
+        curr = curr->next;
+    }
+    return 0;
+
+}
+
+/*
  * Free Hash Table
  * ----------------------------------------
  * Releases all memory associated with the Hash Table
@@ -99,7 +127,7 @@ void hash_table_free(HashTable *table){
             current = next;
         }
     }
-    
+
     free(table);
 
 }
