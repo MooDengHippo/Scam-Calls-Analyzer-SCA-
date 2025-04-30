@@ -19,45 +19,35 @@ static const char* get_risk_level_description(float score){
 
 // Display suspicious score as a bar
 static void display_suspicious_score(float score){
-
     int bar = (int)(score * 20);
     printf("\nSuspicious Score: %6.2f %%\n[", score * 100);
     for(int i = 0; i < 20; ++i)
         putchar(i < bar ? '#' : '-');
     puts("]");
     printf("Risk Level: %s\n\n", get_risk_level_description(score));
-
 }
 
 // Reset visited flags
 static void reset_graph_visits(GraphNode *nodes[]){
-
     for(int i = 0; i < MAX_NODES; ++i)
         if(nodes[i]) nodes[i]->visited = 0;
-
 }
 
-// Recursive graph display
+// Recursive graph display with ASCII fallback
 static void display_scam_graph(GraphNode *node, int level){
-
     if(!node || node->visited) return;
     node->visited = 1;
     for(int i = 0; i < level; ++i) printf("  ");
-    printf("┌─────────────┐\n");
-    for(int i = 0; i < level; ++i) printf("  ");
-    printf("| %-12s |\n", node->phone);
-    for(int i = 0; i < level; ++i) printf("  ");
-    printf("└─────────────┘\n");
+    printf("-- %s\n", node->phone);
     for(int i = 0; i < node->neighbor_count; ++i)
         display_scam_graph(node->neighbors[i], level + 1);
-
 }
 
-// Append a report to pending_reports.csv and update report count
-static void report_number(const char *phone, HashTable *table){
-
+// Append a report to pending_reports.csv only
+static void report_number(const char *phone){
     FILE *fp = fopen("data/pending_reports.csv", "a");
     if(!fp){ perror("Could not open pending_reports.csv"); return; }
+
     time_t raw = time(NULL);
     struct tm *t = localtime(&raw);
     char timestamp[64];
@@ -65,32 +55,20 @@ static void report_number(const char *phone, HashTable *table){
     fprintf(fp, "%s,%s\n", phone, timestamp);
     fclose(fp);
     Logging_Write(LOG_INFO, "User reported number: %s", phone);
-
-    // Update or insert into hash table with incremented report count
-    ScamRecord *rec = hash_table_lookup(table, phone);
-    if(rec){
-        rec->report_count++;
-        rec->suspicious_score = calculate_score(phone, rec->report_count);
-    }else{
-        hash_table_insert(table, phone, calculate_score(phone, 1), 1);
-    }
-
 }
 
 // User CLI loop
 void user_mode(HashTable *table, GraphNode *nodes[]){
-
     while(1){
         char raw[64];
         printf("\nEnter phone (q to return): ");
         if(!fgets(raw, sizeof raw, stdin)) break;
-        if(strncmp(raw, "q", 1) == 0){
+        if(strncmp(raw, "q", 1) == 0 || strncmp(raw, "Q", 1) == 0){
             puts("");
             Logging_Write(LOG_INFO, "User exited User Mode");
             break;
         }
 
-        // normalize
         char norm[MAX_PHONE_LENGTH];
         if(Normalize_Phone(raw, norm, sizeof(norm)) < 0){
             puts("Invalid phone format!\n");
@@ -99,18 +77,15 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
         }
         Logging_Write(LOG_INFO, "User searched for: %s", norm);
 
-        // lookup
         ScamRecord *rec = hash_table_lookup(table, norm);
         if(rec){
             printf("\nNumber found (reported %d times)\n", rec->report_count);
             display_suspicious_score(rec->suspicious_score);
 
-            // ← prompt to flag found numbers too
             printf("Send this number to admin for further inspection? (y/n): ");
             char ans2[8];
-            if(fgets(ans2, sizeof ans2, stdin)
-               && (ans2[0]=='y' || ans2[0]=='Y')){
-                report_number(norm, table);
+            if(fgets(ans2, sizeof ans2, stdin) && (ans2[0]=='y' || ans2[0]=='Y')){
+                report_number(norm);
                 puts("Number sent to admin. Thank you!\n");
             }
 
@@ -133,12 +108,10 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
                 }
             }
 
-            // Prompt to report unknown number
             printf("Would you like to report this number? (y/n): ");
             char ans[8];
-            if(fgets(ans, sizeof ans, stdin)
-               && (ans[0] == 'y' || ans[0] == 'Y')){
-                report_number(norm, table);
+            if(fgets(ans, sizeof ans, stdin) && (ans[0] == 'y' || ans[0] == 'Y')){
+                report_number(norm);
                 puts("Number reported. Thank you!\n");
                 Logging_Write(LOG_INFO, "User reported unknown number: %s", norm);
             }
