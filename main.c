@@ -12,7 +12,6 @@
 
 /* ───── CLI Options ───── */
 static void print_main_menu(void){
-
     puts("========================================");
     puts("     Scam Calls Analyzer  (SCA)");
     puts("========================================");
@@ -20,7 +19,6 @@ static void print_main_menu(void){
     puts(" 2) Admin Mode -  Manage database");
     puts(" 3) Exit");
     printf("\nEnter choice: ");
-
 }
 
 /* ───── Main Program ───── */
@@ -66,9 +64,13 @@ int main(void){
         }
     }
 
-    // 5) Persist data
-    csv_write_data("data/scam_numbers.csv", table);
-    Logging_Write(LOG_INFO, "Data saved to CSV");
+    // 5) Persist data to CSV
+    if(csv_write_data(DB_FILE, table) == 0){
+        Logging_Write(LOG_INFO, "Scam records saved to CSV");
+    }
+    if(csv_write_edges(DB_FILE, nodes) == 0){
+        Logging_Write(LOG_INFO, "Graph relationships saved to CSV");
+    }
 
     // 6) Cleanup GraphNodes
     for(int i = 0; i < MAX_NODES; ++i){
@@ -82,5 +84,4 @@ int main(void){
     Logging_Close();
     puts("See you later, Bye!!!");
     return 0;
-    
 }
