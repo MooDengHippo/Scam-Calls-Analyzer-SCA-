@@ -26,5 +26,6 @@ HashTable* hash_table_init(void);
 void hash_table_insert(HashTable *table, const char *phone, float score, int reports);
 ScamRecord* hash_table_lookup(HashTable *table, const char *phone);
 void hash_table_free(HashTable *table);
+int hash_table_delete(HashTable *table, const char *phone);
 
 #endif // HASH_TABLE_H
