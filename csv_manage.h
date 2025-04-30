@@ -19,5 +19,10 @@ int csv_read_data(const char *fname, HashTable *map, GraphNode *nodes[]);
  *    R,<phone>,<score>,<report_count>
  */
 int csv_write_data(const char *fname, HashTable *map);
+/*
+ * Appends graph edge relationships to CSV file.
+ * Format: E,<phone1>,<phone2>
+ */
+int csv_write_edges(const char *fname, GraphNode *nodes[]);
 
 #endif // CSV_MANAGE_H
