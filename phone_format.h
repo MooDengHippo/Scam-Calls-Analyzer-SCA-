@@ -32,6 +32,6 @@ int Is_SEA_Country(const char *normalized);
  * -------------------------
  * Assign suspicious score based on phone pattern and report count
  */
-float calculate_score(const char *phone, int report_count);
+float calculate_score(const char *phone, int report_count, int neighbor_count);
 
 #endif // PHONE_FORMAT_H
