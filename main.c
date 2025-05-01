@@ -22,7 +22,6 @@ static void print_main_menu(void){
     printf("\nEnter choice: ");
 
 }
-
 /* ───── Main Program ───── */
 int main(void){
 
