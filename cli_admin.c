@@ -120,15 +120,13 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
         printf("\nPhone: %s\nRisk Score: %.2f\nReports: %d\n", rec->phone, rec->suspicious_score, rec->report_count);
         Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
 
-        // 🔧 ลบ prompt เพิ่ม report (ตามคำสั่งคุณ)
-        // 🔧 เพิ่มแสดงความสัมพันธ์หากมี
+        // Show relationships if exist
         if (node && node->neighbor_count > 0) {
             puts("Connected numbers in scam relationship:");
             for (int i = 0; i < node->neighbor_count; ++i)
                 printf(" - %s\n", node->neighbors[i]->phone);
         }
     } else {
-        // 🔧 หากไม่มีใน HashTable แต่มีในกราฟ ให้แสดงเฉพาะ E เท่านั้น
         if (node && node->neighbor_count > 0) {
             printf("\nNo record found, but connected to %d neighbors:\n", node->neighbor_count);
             for (int i = 0; i < node->neighbor_count; ++i)
@@ -137,10 +135,6 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
         } else {
             puts("\nNo record or relationship found.");
         }
-
-        // 🔧 ห้าม insert ใหม่ในกรณีนี้
-        // 🔧 ถ้ามีเฉพาะ E → แสดงเฉยๆ จบ ไม่ insert
-        // 🔧 ถ้าไม่มี R/E จริงๆ → ก็แค่แสดง not found
     }
 }
 
