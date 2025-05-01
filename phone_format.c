@@ -40,7 +40,8 @@ int Normalize_Phone(const char *raw_input, char *normalized_out, size_t max_size
         }
     }
 
-    if(strlen(buffer) >= max_size) return -1;
+    if(strlen(buffer) < 10 || strlen(buffer) >= max_size) return -1;
+
     strcpy(normalized_out, buffer);
     return 0;
 
