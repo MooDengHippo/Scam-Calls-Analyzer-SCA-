@@ -236,7 +236,9 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
         } else if (choice == 5) {
             analyze_number(table, nodes);
         } else {
-            break;
+            // 🔧 Notify invalid choice instead of exiting immediately
+            puts("Invalid selection. Please choose between 1 and 6.");
+            continue;
         }
     }
 }
