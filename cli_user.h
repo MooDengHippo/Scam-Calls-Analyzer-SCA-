@@ -4,7 +4,7 @@
 #include "graph.h"
 /*
  * User Mode Entry Point
- * -------------------------
+ * ---------------------------------------------------------
  * Handles user-side CLI interaction:
  * - Phone number lookup with suspicious score visualization
  * - Scam network relationship display using graph traversal

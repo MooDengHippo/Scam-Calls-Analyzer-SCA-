@@ -107,7 +107,6 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
 
             Logging_Write(LOG_INFO, "Phone found: %s (score: %.2f, reports: %d)",
                           norm, rec->suspicious_score, rec->report_count);
-
         }else{
             if(!Is_SEA_Country(norm)){
                 puts("\nForeign (Non-SEA) number - HIGH RISK!\n");
@@ -119,7 +118,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
                 GraphNode *start = graph_get_node(nodes, norm);
                 if(start && start->neighbor_count > 0){
                     display_scam_graph(start, 0);
-                } else {
+                }else{
                     puts("No relationships found!\n");
                 }
             }
