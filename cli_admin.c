@@ -41,7 +41,10 @@ static void accept_pending_report(const char *line, HashTable *table, GraphNode 
         printf("[Added] New record %s with 1 report and score %.2f\n", norm, score);
         Logging_Write(LOG_INFO, "Accepted report added new: %s (%.2f, 1)", norm, score);
     }
+
+    // Save both updated record and relationship graph
     csv_write_data(DB_FILE, table);
+    csv_write_edges(DB_FILE, nodes); // <-- Added to ensure graph is saved
 }
 
 static void view_pending_reports(HashTable *table, GraphNode *nodes[]) {
