@@ -13,14 +13,12 @@ typedef struct ScamRecord{
     struct ScamRecord *next;      // Linked list for collision handling
 
 }ScamRecord;
-
 // Hash Table mapping phone numbers to scam records
 typedef struct{
 
     ScamRecord *buckets[TABLE_SIZE];
 
 }HashTable;
-
 // Function declarations
 HashTable* hash_table_init(void);
 void hash_table_insert(HashTable *table, const char *phone, float score, int reports);
