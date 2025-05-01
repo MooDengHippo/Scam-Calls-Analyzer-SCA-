@@ -93,9 +93,10 @@ static void view_pending_reports(HashTable *table, GraphNode *nodes[]) {
     remove(PENDING_FILE);
     rename("data/tmp.csv", PENDING_FILE);
     puts("Report accepted and applied to database.");
+
 }
 
-static void analyze_number(HashTable *table, GraphNode *nodes[]) {
+static void analyze_number(HashTable *table, GraphNode *nodes[]){
     char raw[64];
     printf("Enter phone to analyze (or 'q' to cancel): ");
     if (!fgets(raw, sizeof raw, stdin)) return;
@@ -116,29 +117,27 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]) {
         printf("\nPhone: %s\nRisk Score: %.2f\nReports: %d\n", rec->phone, rec->suspicious_score, rec->report_count);
         Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
 
-        printf("Do you want to increase report count by 1 and auto recalculate score? (y/n): ");
-        char ans[8];
-        if (fgets(ans, sizeof ans, stdin) && (ans[0] == 'y' || ans[0] == 'Y')) {
-            rec->report_count++;
-            rec->suspicious_score = calculate_score(norm, rec->report_count, neighbors);
-            printf("Updated report count to %d and new score to %.2f\n", rec->report_count, rec->suspicious_score);
-            Logging_Write(LOG_INFO, "Admin incremented report and updated score: %s (%.2f, %d)", norm, rec->suspicious_score, rec->report_count);
-            csv_write_data(DB_FILE, table);
+        // 🔧 ลบ prompt เพิ่ม report (ตามคำสั่งคุณ)
+        // 🔧 เพิ่มแสดงความสัมพันธ์หากมี
+        if (node && node->neighbor_count > 0) {
+            puts("Connected numbers in scam relationship:");
+            for (int i = 0; i < node->neighbor_count; ++i)
+                printf(" - %s\n", node->neighbors[i]->phone);
         }
     } else {
-        if (node && node->neighbor_count) {
+        // 🔧 หากไม่มีใน HashTable แต่มีในกราฟ ให้แสดงเฉพาะ E เท่านั้น
+        if (node && node->neighbor_count > 0) {
             printf("\nNo record found, but connected to %d neighbors:\n", node->neighbor_count);
             for (int i = 0; i < node->neighbor_count; ++i)
                 printf(" - %s\n", node->neighbors[i]->phone);
+            Logging_Write(LOG_INFO, "Admin analyzed E-only record: %s", norm);
         } else {
             puts("\nNo record or relationship found.");
         }
 
-        float est = calculate_score(norm, 0, neighbors);
-        hash_table_insert(table, norm, est, 0);
-        printf("Added new record with 0 reports and score: %.2f\n", est);
-        Logging_Write(LOG_INFO, "Admin added new record via analyze: %s (%.2f, 0)", norm, est);
-        csv_write_data(DB_FILE, table);
+        // 🔧 ห้าม insert ใหม่ในกรณีนี้
+        // 🔧 ถ้ามีเฉพาะ E → แสดงเฉยๆ จบ ไม่ insert
+        // 🔧 ถ้าไม่มี R/E จริงๆ → ก็แค่แสดง not found
     }
 }
 
