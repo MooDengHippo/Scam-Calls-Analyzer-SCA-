@@ -7,7 +7,8 @@
 #include "graph.h"
 #include "logging.h"
 #define PENDING_FILE "data/pending_reports.csv"
-#define DB_FILE "data/scam_numbers.csv"
+#define RECORD_FILE "data/scam_numbers.csv"
+#define EDGE_FILE   "data/scam_edges.csv"
 
 // External CSV writing functions
 extern int csv_write_data(const char *fname, HashTable *map);
@@ -43,8 +44,8 @@ static void accept_pending_report(const char *line, HashTable *table, GraphNode 
     }
 
     // Save both updated record and relationship graph
-    csv_write_data(DB_FILE, table);
-    csv_write_edges(DB_FILE, nodes); // <-- Added to ensure graph is saved
+    csv_write_data(RECORD_FILE, table);
+    csv_write_edges(EDGE_FILE, nodes);
 }
 
 static void view_pending_reports(HashTable *table, GraphNode *nodes[]) {
@@ -99,7 +100,7 @@ static void view_pending_reports(HashTable *table, GraphNode *nodes[]) {
 
 }
 
-static void analyze_number(HashTable *table, GraphNode *nodes[]){
+static void analyze_number(HashTable *table, GraphNode *nodes[]) {
     char raw[64];
     printf("Enter phone to analyze (or 'q' to cancel): ");
     if (!fgets(raw, sizeof raw, stdin)) return;
@@ -120,7 +121,6 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
         printf("\nPhone: %s\nRisk Score: %.2f\nReports: %d\n", rec->phone, rec->suspicious_score, rec->report_count);
         Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
 
-        // Show relationships if exist
         if (node && node->neighbor_count > 0) {
             puts("Connected numbers in scam relationship:");
             for (int i = 0; i < node->neighbor_count; ++i)
@@ -178,7 +178,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
                     old->suspicious_score = calculate_score(norm, old->report_count, neighbors);
                     printf("Updated record: %s (Score: %.2f, Reports: %d)\n", norm, old->suspicious_score, old->report_count);
                     Logging_Write(LOG_INFO, "Admin incremented report on existing: %s (%.2f, %d)", norm, old->suspicious_score, old->report_count);
-                    csv_write_data(DB_FILE, table);
+                    csv_write_data(RECORD_FILE, table);
                 } else {
                     puts("No changes made.");
                 }
@@ -187,7 +187,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
                 hash_table_insert(table, norm, score, 0);
                 printf("Added new record: %s (Score: %.2f, Reports: 0)\n", norm, score);
                 Logging_Write(LOG_INFO, "Admin added new record: %s (%.2f, 0)", norm, score);
-                csv_write_data(DB_FILE, table);
+                csv_write_data(RECORD_FILE, table);
             }
 
         } else if (choice == 2) {
@@ -204,8 +204,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
                 continue;
             }
 
-            // Prevent edge creation between same or invalid short numbers
-            if(strlen(normA) < 10 || strlen(normB) < 10){
+            if (strlen(normA) < 10 || strlen(normB) < 10) {
                 puts("Phone number too short to create relationship.");
                 continue;
             }
@@ -213,7 +212,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
             graph_add_edge(nodes, normA, normB);
             printf("Linked %s <--> %s\n", normA, normB);
             Logging_Write(LOG_INFO, "Admin linked %s <--> %s", normA, normB);
-            csv_write_edges(DB_FILE, nodes);
+            csv_write_edges(EDGE_FILE, nodes);
 
         } else if (choice == 3) {
             printf("Phone to delete (q to cancel): ");
@@ -229,7 +228,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
             if (hash_table_delete(table, dn)) {
                 printf("Deleted %s\n", dn);
                 Logging_Write(LOG_INFO, "Admin deleted record: %s", dn);
-                csv_write_data(DB_FILE, table);
+                csv_write_data(RECORD_FILE, table);
             } else {
                 puts("Record not found!");
             }
@@ -239,7 +238,6 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
         } else if (choice == 5) {
             analyze_number(table, nodes);
         } else {
-            // 🔧 Notify invalid choice instead of exiting immediately
             puts("Invalid selection. Please choose between 1 and 6.");
             continue;
         }
