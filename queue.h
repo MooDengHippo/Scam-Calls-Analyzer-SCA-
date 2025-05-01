@@ -9,7 +9,6 @@ typedef struct QueueNode{
     struct QueueNode *next;
 
 }QueueNode;
-
 // Main queue structure with front and rear pointers
 typedef struct Queue{
 
