@@ -101,6 +101,65 @@ static void view_pending_reports(HashTable *table, GraphNode *nodes[]){
     puts("Report accepted and applied to database.");
 
 }
+
+// convert risk level description
+const char* get_risk_level_description(float score) {
+    if (score >= 0.81f) return "SEVERE";
+    else if (score >= 0.61f) return "HIGH";
+    else if (score >= 0.41f) return "MEDIUM";
+    else if (score >= 0.21f) return "LOW";
+    else return "VERY LOW";
+}
+
+//Display scam numbers in table format
+static void view_formatted_reports() {
+    FILE *fp = fopen(RECORD_FILE, "r");
+    if (!fp) {
+        puts("Failed to open scam_numbers.csv.");
+        Logging_Write(LOG_WARN, "Admin tried to view formatted scam number reports.csv");
+        return;
+    }
+
+    ScamRecord reports[100];
+    int report_count = 0;
+    char line[256];
+
+   
+    while (fgets(line, sizeof(line), fp)) {
+        char label[8];   
+        char phone[16];
+        int count;
+        float score;
+
+       
+        if (sscanf(line, "%[^,],%[^,],%f,%d", label, phone, &score, &count) == 4) {
+            strcpy(reports[report_count].phone, phone);
+            reports[report_count].report_count = count;
+            reports[report_count].suspicious_score = score;
+            report_count++;
+        }
+    }
+
+    fclose(fp);
+
+   
+    puts("\n--- Scam Report Table ---");
+    printf("=============================================\n");
+    printf("|  Phone Number   | Reports |  Risk Level   |\n");
+    printf("---------------------------------------------\n");
+
+    for (int i = 0; i < report_count; i++) {
+        printf("|  %-15s |   %-6d |  %-11s |\n", 
+            reports[i].phone, 
+            reports[i].report_count, 
+            get_risk_level_description(reports[i].suspicious_score));
+    }
+
+    printf("=============================================\n");
+
+    Logging_Write(LOG_INFO, "Admin viewed formatted scam number reports");
+}
+
 // Analyze number function
 static void analyze_number(HashTable *table, GraphNode *nodes[]){
 
@@ -142,22 +201,22 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
     
 }
 // Admin Menu
-void admin_mode(HashTable *table, GraphNode *nodes[]){
-
-    while(1){
+void admin_mode(HashTable *table, GraphNode *nodes[]) {
+    while (1) {
         puts("\n--- Admin Menu ---");
         puts(" 1) Add/update suspicious phone record");
         puts(" 2) Add relationship edge");
         puts(" 3) Delete suspicious phone record");
         puts(" 4) View pending reports");
-        puts(" 5) Analyze number");
-        puts(" 6) Back to main menu");
+        puts(" 5) View formatted scam numbers table");
+        puts(" 6) Analyze number");
+        puts(" 7) Back to main menu");
         printf("Select: ");
 
         int choice = 0;
-        if(scanf("%d%*c", &choice) != 1) choice = 6;
+        if (scanf("%d%*c", &choice) != 1) choice = 6;
 
-        if(choice == 1){
+        if (choice == 1) {
             char phone[64];
             printf("Phone (or 'q' to cancel): ");
             if (!fgets(phone, sizeof phone, stdin)) break;
@@ -165,7 +224,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             phone[strcspn(phone, "\n")] = 0;
 
             char norm[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(phone, norm, sizeof(norm)) < 0){
+            if (Normalize_Phone(phone, norm, sizeof(norm)) < 0) {
                 puts("Invalid phone format!");
                 continue;
             }
@@ -174,41 +233,42 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             int neighbors = node ? node->neighbor_count : 0;
 
             ScamRecord *old = hash_table_lookup(table, norm);
-            if(old){
+            if (old) {
                 printf("This number already exists with score %.2f and reports %d\n", old->suspicious_score, old->report_count);
                 printf("Do you want to increase the report count? (y/n): ");
                 char yn[8];
-                if(fgets(yn, sizeof yn, stdin) && (yn[0] == 'y' || yn[0] == 'Y')){
+                if (fgets(yn, sizeof yn, stdin) && (yn[0] == 'y' || yn[0] == 'Y')) {
                     old->report_count++;
                     old->suspicious_score = calculate_score(norm, old->report_count, neighbors);
                     printf("Updated record: %s (Score: %.2f, Reports: %d)\n", norm, old->suspicious_score, old->report_count);
                     Logging_Write(LOG_INFO, "Admin incremented report on existing: %s (%.2f, %d)", norm, old->suspicious_score, old->report_count);
                     csv_write_data(RECORD_FILE, table);
-                }else{
+                } else {
                     puts("No changes made.");
                 }
-            }else{
+            } else {
                 float score = calculate_score(norm, 0, neighbors);
                 hash_table_insert(table, norm, score, 0);
                 printf("Added new record: %s (Score: %.2f, Reports: 0)\n", norm, score);
                 Logging_Write(LOG_INFO, "Admin added new record: %s (%.2f, 0)", norm, score);
                 csv_write_data(RECORD_FILE, table);
             }
-        }else if(choice == 2){
+
+        } else if (choice == 2) {
             char phoneA[64], phoneB[64];
             printf("Phone A (or 'q' to cancel): ");
-            if(!fgets(phoneA, sizeof phoneA, stdin) || phoneA[0] == 'q' || phoneA[0] == 'Q') continue;
+            if (!fgets(phoneA, sizeof phoneA, stdin) || phoneA[0] == 'q' || phoneA[0] == 'Q') continue;
             printf("Phone B (or 'q' to cancel): ");
-            if(!fgets(phoneB, sizeof phoneB, stdin) || phoneB[0] == 'q' || phoneB[0] == 'Q') continue;
+            if (!fgets(phoneB, sizeof phoneB, stdin) || phoneB[0] == 'q' || phoneB[0] == 'Q') continue;
 
             char normA[MAX_PHONE_LENGTH], normB[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(phoneA, normA, sizeof(normA)) < 0 ||
-                Normalize_Phone(phoneB, normB, sizeof(normB)) < 0){
+            if (Normalize_Phone(phoneA, normA, sizeof(normA)) < 0 ||
+                Normalize_Phone(phoneB, normB, sizeof(normB)) < 0) {
                 puts("Invalid phone format!");
                 continue;
             }
 
-            if(strlen(normA) < 10 || strlen(normB) < 10){
+            if (strlen(normA) < 10 || strlen(normB) < 10) {
                 puts("Phone number too short to create relationship.");
                 continue;
             }
@@ -218,35 +278,34 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             Logging_Write(LOG_INFO, "Admin linked %s <--> %s", normA, normB);
             csv_write_edges(EDGE_FILE, nodes);
 
-        }else if (choice == 3){
+        } else if (choice == 3) {
             printf("Phone to delete (q to cancel): ");
             char dp[64];
-            if(!fgets(dp, sizeof dp, stdin) || dp[0] == 'q' || dp[0] == 'Q') continue;
+            if (!fgets(dp, sizeof dp, stdin) || dp[0] == 'q' || dp[0] == 'Q') continue;
             dp[strcspn(dp, "\n")] = 0;
 
             char dn[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(dp, dn, sizeof(dn)) < 0){
+            if (Normalize_Phone(dp, dn, sizeof(dn)) < 0) {
                 puts("Invalid phone format!");
                 continue;
             }
-            if(hash_table_delete(table, dn)){
+            if (hash_table_delete(table, dn)) {
                 printf("Deleted %s\n", dn);
                 Logging_Write(LOG_INFO, "Admin deleted record: %s", dn);
                 csv_write_data(RECORD_FILE, table);
-            }else{
+            } else {
                 puts("Record not found!");
             }
-        }else if(choice == 4){
+
+        } else if (choice == 4) {
             view_pending_reports(table, nodes);
-        }else if(choice == 5){
+        } else if(choice == 5){
+            view_formatted_reports();
+        }else if (choice == 6) {
             analyze_number(table, nodes);
-        }else if(choice == 6){
-            break;
-            Logging_Write(LOG_INFO, "Admin exited Admin Mode");
-        }else{
+        } else {
             puts("Invalid selection. Please choose between 1 and 6.");
             continue;
         }
     }
-
 }
