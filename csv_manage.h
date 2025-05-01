@@ -1,30 +1,31 @@
 #ifndef CSV_MANAGE_H
 #define CSV_MANAGE_H
+
 #include "hash_table.h"
 #include "graph.h"
+
 /*
- * Read data from CSV file and populate the system:
- * - Populates Hash Table with suspicious numbers
- * - Populates Graph with phone-to-phone relationships
- * - Format:
- *     R,<phone>,<suspicious_score 0 to 1>,<report_count>
- *     E,<phone1>,<phone2>
- * - Returns number of valid rows parsed, or -1 on error
+ * Read CSV and populate Hash Table and Graph structure
+ * Parameters:
+ *   record_file -> path to scam_numbers.csv (R,... entries)
+ *   edge_file   -> path to scam_edges.csv (E,... entries)
+ *   table       -> hash table to populate
+ *   nodes       -> graph node array for relationships
+ * Returns:
+ *   Number of records loaded or -1 on error
  */
-int csv_read_data(const char *fname, HashTable *map, GraphNode *nodes[]);
+int csv_read_data(const char *record_file, const char *edge_file, HashTable *table, GraphNode *nodes[]);
+
 /*
- * Write the current state of the HashMap back to CSV
- * - Used on exit to persist the system state
- * - Format:
- *    R,<phone>,<score>,<report_count>
+ * Write phone records from hash table to CSV
+ * Format: R, <phone>, <score>, <report_count>
  */
-int csv_write_data(const char *fname, HashTable *map);
+int csv_write_data(const char *fname, HashTable *table);
+
 /*
- * Append all graph edges (relationships) to CSV
- * - Appends after the scam record data
- * - Format:
- *    E,<phone1>,<phone2>
+ * Write graph relationships to CSV
+ * Format: E, <phoneA>, <phoneB>
  */
-int csv_write_edges(const char *fname, GraphNode **nodes);
+int csv_write_edges(const char *fname, GraphNode *nodes[]);
 
 #endif // CSV_MANAGE_H

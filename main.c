@@ -35,11 +35,12 @@ int main(void){
     Logging_Write(LOG_INFO, "Program started");
 
     // 3) Load CSV
-    const char *DB_FILE = "data/scam_numbers.csv";
-    int rows = csv_read_data(DB_FILE, table, nodes);
+    const char *RECORD_FILE = "data/scam_numbers.csv";
+    const char *EDGE_FILE   = "data/scam_edges.csv";
+    int rows = csv_read_data(RECORD_FILE, EDGE_FILE, table, nodes);
     if(rows < 0){
-        Logging_Write(LOG_ERROR, "Failed to load data from %s", DB_FILE);
-        fprintf(stderr, "Error: Failed to load data from %s\n", DB_FILE);
+        Logging_Write(LOG_ERROR, "Failed to load data from %s and %s", RECORD_FILE, EDGE_FILE);
+        fprintf(stderr, "Error: Failed to load data from CSV files\n");
         hash_table_free(table);
         Logging_Close();
         return EXIT_FAILURE;
@@ -67,10 +68,10 @@ int main(void){
     }
 
     // 5) Persist data to CSV
-    if(csv_write_data(DB_FILE, table) == 0){
+    if(csv_write_data(RECORD_FILE, table) == 0){
         Logging_Write(LOG_INFO, "Scam records saved to CSV");
     }
-    if(csv_write_edges(DB_FILE, nodes) == 0){
+    if(csv_write_edges(EDGE_FILE, nodes) == 0){
         Logging_Write(LOG_INFO, "Graph relationships saved to CSV");
     }
 
