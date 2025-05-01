@@ -18,7 +18,6 @@ static const char* get_risk_level_description(float score){
     else return "VERY LOW";
 
 }
-
 // Display suspicious score as a bar
 static void display_suspicious_score(float score){
 
@@ -30,7 +29,6 @@ static void display_suspicious_score(float score){
     printf("Risk Level: %s\n\n", get_risk_level_description(score));
 
 }
-
 // Reset visited flags
 static void reset_graph_visits(GraphNode *nodes[]){
 
@@ -38,7 +36,6 @@ static void reset_graph_visits(GraphNode *nodes[]){
         if(nodes[i]) nodes[i]->visited = 0;
 
 }
-
 // Recursive graph display with ASCII
 static void display_scam_graph(GraphNode *node, int level){
 
@@ -50,7 +47,6 @@ static void display_scam_graph(GraphNode *node, int level){
         display_scam_graph(node->neighbors[i], level + 1);
 
 }
-
 // Append a report to pending_reports.csv only
 static void report_number(const char *phone){
 
@@ -66,7 +62,6 @@ static void report_number(const char *phone){
     Logging_Write(LOG_INFO, "User reported number: %s", phone);
 
 }
-
 // User CLI loop
 void user_mode(HashTable *table, GraphNode *nodes[]){
 
