@@ -7,7 +7,11 @@
 #include "graph.h"
 #include "logging.h"
 #define PENDING_FILE "data/pending_reports.csv"
+#define DB_FILE "data/scam_numbers.csv"
 
+// External CSV writing functions
+extern int csv_write_data(const char *fname, HashTable *map);
+extern int csv_write_edges(const char *fname, GraphNode *nodes);
 /*
  * Process one pending report:
  * - Validate phone format
@@ -39,8 +43,8 @@ static void accept_pending_report(const char *line, HashTable *table){
         printf("[Added] New record %s with 1 report and score %.2f\n", norm, score);
         Logging_Write(LOG_INFO, "Accepted report added new: %s (%.2f, 1)", norm, score);
     }
+    csv_write_data(DB_FILE, table);
 }
-
 /*
  * Show and handle user-submitted pending reports
  * - Admin selects index to accept
@@ -73,10 +77,8 @@ static void view_pending_reports(HashTable *table){
     int choice = atoi(input);
     if(choice <= 0 || choice > line_num){ puts("Invalid selection."); return; }
 
-    // Apply the report
     accept_pending_report(lines[choice - 1], table);
 
-    // Rewrite the file without the accepted line
     FILE *out = fopen("data/tmp.csv", "w");
     if(!out){
         puts("File error during cleanup!");
@@ -90,7 +92,6 @@ static void view_pending_reports(HashTable *table){
     rename("data/tmp.csv", PENDING_FILE);
     puts("Report accepted and applied to database.");
 }
-
 /*
  * Analyze phone number and offer to add/increment it
  */
@@ -120,6 +121,7 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
             rec->suspicious_score = calculate_score(norm, rec->report_count);
             printf("Updated report count to %d and new score to %.2f\n", rec->report_count, rec->suspicious_score);
             Logging_Write(LOG_INFO, "Admin incremented report and updated score: %s (%.2f, %d)", norm, rec->suspicious_score, rec->report_count);
+            csv_write_data(DB_FILE, table);
         }
     }else{
         GraphNode *node = graph_get_node(nodes, norm);
@@ -135,9 +137,9 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
         hash_table_insert(table, norm, est, 0);
         printf("Added new record with 0 reports and score: %.2f\n", est);
         Logging_Write(LOG_INFO, "Admin added new record via analyze: %s (%.2f, 0)", norm, est);
+        csv_write_data(DB_FILE, table);
     }
 }
-
 /*
  * Admin menu logic
  */
@@ -180,6 +182,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                     printf("Updated record: %s (Score: %.2f, Reports: %d)\n",
                            norm, old->suspicious_score, old->report_count);
                     Logging_Write(LOG_INFO, "Admin incremented report on existing: %s (%.2f, %d)", norm, old->suspicious_score, old->report_count);
+                    csv_write_data(DB_FILE, table);
                 } else {
                     puts("No changes made.");
                 }
@@ -187,6 +190,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                 hash_table_insert(table, norm, calculate_score(norm, 0), 0);
                 printf("Added new record: %s (Score: %.2f, Reports: 0)\n", norm, calculate_score(norm, 0));
                 Logging_Write(LOG_INFO, "Admin added new record: %s (%.2f, 0)", norm, calculate_score(norm, 0));
+                csv_write_data(DB_FILE, table);
             }
 
         }else if(choice == 2){
@@ -206,6 +210,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             graph_add_edge(nodes, normA, normB);
             printf("Linked %s <--> %s\n", normA, normB);
             Logging_Write(LOG_INFO, "Admin linked %s <--> %s", normA, normB);
+            csv_write_edges(DB_FILE, nodes);
 
         }else if(choice == 3){
             printf("Phone to delete (q to cancel): ");
@@ -221,6 +226,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             if(hash_table_delete(table, dn)){
                 printf("Deleted %s\n", dn);
                 Logging_Write(LOG_INFO, "Admin deleted record: %s", dn);
+                csv_write_data(DB_FILE, table);
             } else {
                 puts("Record not found!");
             }
