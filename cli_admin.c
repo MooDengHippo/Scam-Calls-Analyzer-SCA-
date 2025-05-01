@@ -207,6 +207,12 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
                 continue;
             }
 
+            // Prevent edge creation between same or invalid short numbers
+            if(strlen(normA) < 10 || strlen(normB) < 10){
+                puts("Phone number too short to create relationship.");
+                continue;
+            }
+
             graph_add_edge(nodes, normA, normB);
             printf("Linked %s <--> %s\n", normA, normB);
             Logging_Write(LOG_INFO, "Admin linked %s <--> %s", normA, normB);
