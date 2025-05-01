@@ -5,7 +5,6 @@
 #include "logging.h"
 
 static FILE *log_fp = NULL;
-
 void Logging_Init(const char *log_file){
 
     log_fp = fopen(log_file, "a");
