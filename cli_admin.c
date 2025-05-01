@@ -233,11 +233,13 @@ void admin_mode(HashTable *table, GraphNode *nodes[]) {
                 puts("Record not found!");
             }
 
-        } else if (choice == 4) {
+        }else if(choice == 4){
             view_pending_reports(table, nodes);
-        } else if (choice == 5) {
+        }else if(choice == 5){
             analyze_number(table, nodes);
-        } else {
+        }else if(choice == 6){
+            break;
+        }else{
             puts("Invalid selection. Please choose between 1 and 6.");
             continue;
         }

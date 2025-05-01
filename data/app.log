@@ -1,0 +1,82 @@
+[2025-05-01 19:03:24] [INFO ] Program started
+[2025-05-01 19:03:24] [INFO ] Loaded 11 records from database
+[2025-05-01 19:04:28] [INFO ] Scam records saved to CSV
+[2025-05-01 19:04:28] [INFO ] Graph relationships saved to CSV
+[2025-05-01 19:04:28] [INFO ] Program exited cleanly!
+[2025-05-01 19:04:43] [INFO ] Program started
+[2025-05-01 19:04:43] [INFO ] Loaded 11 records from database
+[2025-05-01 19:04:49] [INFO ] Scam records saved to CSV
+[2025-05-01 19:04:49] [INFO ] Graph relationships saved to CSV
+[2025-05-01 19:04:49] [INFO ] Program exited cleanly!
+[2025-05-01 19:04:54] [INFO ] Program started
+[2025-05-01 19:04:54] [INFO ] Loaded 11 records from database
+[2025-05-01 19:05:03] [INFO ] User entered User Mode
+[2025-05-01 19:05:19] [INFO ] User searched for: +4400000999
+[2025-05-01 19:05:31] [INFO ] User reported number: +4400000999
+[2025-05-01 19:05:31] [INFO ] Phone found: +4400000999 (score: 1.00, reports: 7)
+[2025-05-01 19:06:01] [INFO ] User searched for: +6600000004
+[2025-05-01 19:06:07] [INFO ] User reported number: +6600000004
+[2025-05-01 19:06:07] [INFO ] Phone found: +6600000004 (score: 0.30, reports: 3)
+[2025-05-01 19:06:37] [INFO ] User exited User Mode
+[2025-05-01 19:06:39] [INFO ] User entered Admin Mode
+[2025-05-01 19:07:22] [INFO ] Admin deleted record: +4400000999
+[2025-05-01 19:08:03] [INFO ] Admin incremented report on existing: +6600000002 (0.30, 2)
+[2025-05-01 19:09:14] [INFO ] Program started
+[2025-05-01 19:09:14] [INFO ] Loaded 10 records from database
+[2025-05-01 19:09:16] [INFO ] User entered Admin Mode
+[2025-05-01 19:10:52] [INFO ] Program started
+[2025-05-01 19:10:52] [INFO ] Loaded 10 records from database
+[2025-05-01 19:10:55] [INFO ] User entered Admin Mode
+[2025-05-01 19:13:57] [INFO ] Program started
+[2025-05-01 19:13:57] [INFO ] Loaded 11 records from database
+[2025-05-01 19:13:59] [INFO ] User entered Admin Mode
+[2025-05-01 19:14:31] [INFO ] User entered Admin Mode
+[2025-05-01 19:14:37] [INFO ] Admin viewed pending reports
+[2025-05-01 19:14:45] [INFO ] Accepted report added new: +4400000999 (1.00, 1)
+[2025-05-01 19:15:10] [INFO ] Admin linked +66888888888 <--> +66999999999
+[2025-05-01 19:15:43] [INFO ] Admin linked +66894567123 <--> +66843253256
+[2025-05-01 19:16:07] [INFO ] Admin analyzed (found): +6600000001
+[2025-05-01 19:16:41] [INFO ] Admin added new record: +6651235954 (0.10, 0)
+[2025-05-01 19:17:01] [INFO ] User exited the program
+[2025-05-01 19:17:01] [INFO ] Scam records saved to CSV
+[2025-05-01 19:17:01] [INFO ] Graph relationships saved to CSV
+[2025-05-01 19:17:01] [INFO ] Program exited cleanly!
+[2025-05-01 19:28:33] [INFO ] Program started
+[2025-05-01 19:28:33] [INFO ] Loaded 13 records from database
+[2025-05-01 19:28:37] [INFO ] User entered Admin Mode
+[2025-05-01 19:29:00] [INFO ] User entered Admin Mode
+[2025-05-01 19:29:36] [INFO ] Admin linked +66888888888 <--> +66999999999
+[2025-05-01 19:30:09] [INFO ] Admin linked +66846485975 <--> +66956487545
+[2025-05-01 19:30:31] [INFO ] User entered User Mode
+[2025-05-01 19:30:44] [INFO ] User searched for: +66844444444
+[2025-05-01 19:30:44] [INFO ] SEA number not found in DB: +66844444444
+[2025-05-01 19:30:46] [INFO ] User reported number: +66844444444
+[2025-05-01 19:30:46] [INFO ] User reported unknown number: +66844444444
+[2025-05-01 19:32:00] [INFO ] User searched for: +6600000001
+[2025-05-01 19:32:16] [INFO ] User reported number: +6600000001
+[2025-05-01 19:32:16] [INFO ] Phone found: +6600000001 (score: 0.50, reports: 5)
+[2025-05-01 19:32:23] [INFO ] User exited User Mode
+[2025-05-01 19:32:25] [INFO ] User entered Admin Mode
+[2025-05-01 19:32:26] [INFO ] Admin viewed pending reports
+[2025-05-01 19:32:53] [INFO ] Admin viewed pending reports
+[2025-05-01 19:33:12] [INFO ] User exited the program
+[2025-05-01 19:33:12] [INFO ] Scam records saved to CSV
+[2025-05-01 19:33:12] [INFO ] Graph relationships saved to CSV
+[2025-05-01 19:33:12] [INFO ] Program exited cleanly!
+[2025-05-01 19:33:25] [INFO ] Program started
+[2025-05-01 19:33:25] [INFO ] Loaded 13 records from database
+[2025-05-01 19:33:32] [INFO ] User entered Admin Mode
+[2025-05-01 19:33:35] [INFO ] Admin viewed pending reports
+[2025-05-01 19:34:05] [INFO ] Admin viewed pending reports
+[2025-05-01 19:36:23] [INFO ] Admin viewed pending reports
+[2025-05-01 19:36:30] [INFO ] Accepted report updated existing: +6600000004 (0.35, 4)
+[2025-05-01 19:37:05] [INFO ] Admin viewed pending reports
+[2025-05-01 19:37:18] [INFO ] Accepted report updated existing: +6600000001 (0.55, 6)
+[2025-05-01 19:38:19] [INFO ] User entered User Mode
+[2025-05-01 19:38:25] [INFO ] User searched for: +45555555555
+[2025-05-01 19:38:25] [WARN ] Foreign number - Not SEA: +45555555555
+[2025-05-01 19:38:43] [INFO ] User exited User Mode
+[2025-05-01 19:38:44] [INFO ] User exited the program
+[2025-05-01 19:38:44] [INFO ] Scam records saved to CSV
+[2025-05-01 19:38:44] [INFO ] Graph relationships saved to CSV
+[2025-05-01 19:38:44] [INFO ] Program exited cleanly!

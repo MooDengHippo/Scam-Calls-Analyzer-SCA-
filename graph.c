@@ -23,20 +23,27 @@ GraphNode *graph_get_node(GraphNode *nodes[], const char *phone){
     return NULL;
 
 }
+// Helper: Check if node a is already connected to node b
+static int already_connected(GraphNode *a, GraphNode *b) {
+    for (int i = 0; i < a->neighbor_count; ++i) {
+        if (a->neighbors[i] == b) return 1;
+    }
+    return 0;
+}
 /*
  * Add a bidirectional edge between two phone numbers.
  * Prevents overflow if the neighbor list is full.
  */
-void graph_add_edge(GraphNode *nodes[], const char *a, const char *b){
-
+void graph_add_edge(GraphNode *nodes[], const char *a, const char *b) {
     GraphNode *na = graph_get_node(nodes, a);
     GraphNode *nb = graph_get_node(nodes, b);
-    if(!na || !nb) return;
-    if(na->neighbor_count < MAX_NEIGHBORS)
-        na->neighbors[na->neighbor_count++] = nb;
-    if(nb->neighbor_count < MAX_NEIGHBORS)
-        nb->neighbors[nb->neighbor_count++] = na;
+    if (!na || !nb) return;
 
+    if (!already_connected(na, nb) && na->neighbor_count < MAX_NEIGHBORS)
+        na->neighbors[na->neighbor_count++] = nb;
+
+    if (!already_connected(nb, na) && nb->neighbor_count < MAX_NEIGHBORS)
+        nb->neighbors[nb->neighbor_count++] = na;
 }
 /*
  * Perform Breadth-First Search from a given start phone number.
