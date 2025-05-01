@@ -121,7 +121,8 @@ int csv_write_data(const char *fname, HashTable *table){
  */
 int csv_write_edges(const char *fname, GraphNode *nodes[]){
 
-    FILE *fp = fopen(fname, "a");
+    // 🔧 Change from "a" to "w" to prevent missing/duplicate edges
+    FILE *fp = fopen(fname, "w");
     if(!fp) return -1;
 
     for(int i = 0; i < MAX_NODES; ++i){
