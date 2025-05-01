@@ -109,7 +109,6 @@ int hash_table_delete(HashTable *table, const char *phone){
     return 0;
 
 }
-
 /*
  * Free Hash Table
  * ----------------------------------------

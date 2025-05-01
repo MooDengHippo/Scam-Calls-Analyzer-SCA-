@@ -12,6 +12,7 @@
 
 /* ───── CLI Options ───── */
 static void print_main_menu(void){
+
     puts("========================================");
     puts("     Scam Calls Analyzer  (SCA)");
     puts("========================================");
@@ -19,6 +20,7 @@ static void print_main_menu(void){
     puts(" 2) Admin Mode -  Manage database");
     puts(" 3) Exit");
     printf("\nEnter choice: ");
+
 }
 
 /* ───── Main Program ───── */
@@ -84,4 +86,5 @@ int main(void){
     Logging_Close();
     puts("See you later, Bye!!!");
     return 0;
+    
 }
