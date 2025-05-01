@@ -19,6 +19,7 @@ extern int csv_write_edges(const char *fname, GraphNode **nodes);
  * - Recalculate score
  */
 static void accept_pending_report(const char *line, HashTable *table){
+
     char copy[128];
     strncpy(copy, line, sizeof(copy));
     char *phone_token = strtok(copy, ",\n");
@@ -44,13 +45,15 @@ static void accept_pending_report(const char *line, HashTable *table){
         Logging_Write(LOG_INFO, "Accepted report added new: %s (%.2f, 1)", norm, score);
     }
     csv_write_data(DB_FILE, table);
+
 }
 /*
- * Show and handle user-submitted pending reports
+ * Show and handle user submitted pending reports
  * - Admin selects index to accept
  * - The report is applied to DB and removed from queue
  */
 static void view_pending_reports(HashTable *table){
+
     FILE *fp = fopen(PENDING_FILE, "r");
     if(!fp){
         puts("No pending reports found.");
@@ -75,7 +78,9 @@ static void view_pending_reports(HashTable *table){
     if(input[0] == 'q' || input[0] == 'Q') return;
 
     int choice = atoi(input);
-    if(choice <= 0 || choice > line_num){ puts("Invalid selection."); return; }
+    if(choice <= 0 || choice > line_num){ 
+        puts("Invalid selection."); return; 
+    }
 
     accept_pending_report(lines[choice - 1], table);
 
@@ -91,11 +96,11 @@ static void view_pending_reports(HashTable *table){
     remove(PENDING_FILE);
     rename("data/tmp.csv", PENDING_FILE);
     puts("Report accepted and applied to database.");
+
 }
-/*
- * Analyze phone number and offer to add/increment it
- */
+// Analyze phone number and offer to add/increment it
 static void analyze_number(HashTable *table, GraphNode *nodes[]){
+
     char raw[64];
     printf("Enter phone to analyze (or 'q' to cancel): ");
     if(!fgets(raw, sizeof raw, stdin)) return;
@@ -114,7 +119,7 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
                rec->phone, rec->suspicious_score, rec->report_count);
         Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
 
-        printf("Do you want to increase report count by 1 and auto-recalculate score? (y/n): ");
+        printf("Do you want to increase report count by 1 and auto recalculate score? (y/n): ");
         char ans[8];
         if(fgets(ans, sizeof ans, stdin) && (ans[0]=='y' || ans[0]=='Y')){
             rec->report_count++;
@@ -139,11 +144,11 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
         Logging_Write(LOG_INFO, "Admin added new record via analyze: %s (%.2f, 0)", norm, est);
         csv_write_data(DB_FILE, table);
     }
+
 }
-/*
- * Admin menu logic
- */
+// Admin menu logic
 void admin_mode(HashTable *table, GraphNode *nodes[]){
+
     while(1){
         puts("\n--- Admin Menu ---");
         puts(" 1) Add/update suspicious phone record");
@@ -183,10 +188,10 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                            norm, old->suspicious_score, old->report_count);
                     Logging_Write(LOG_INFO, "Admin incremented report on existing: %s (%.2f, %d)", norm, old->suspicious_score, old->report_count);
                     csv_write_data(DB_FILE, table);
-                } else {
+                }else{
                     puts("No changes made.");
                 }
-            } else {
+            }else{
                 hash_table_insert(table, norm, calculate_score(norm, 0), 0);
                 printf("Added new record: %s (Score: %.2f, Reports: 0)\n", norm, calculate_score(norm, 0));
                 Logging_Write(LOG_INFO, "Admin added new record: %s (%.2f, 0)", norm, calculate_score(norm, 0));
@@ -227,7 +232,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                 printf("Deleted %s\n", dn);
                 Logging_Write(LOG_INFO, "Admin deleted record: %s", dn);
                 csv_write_data(DB_FILE, table);
-            } else {
+            }else{
                 puts("Record not found!");
             }
 
@@ -239,4 +244,5 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             break;
         }
     }
+
 }
