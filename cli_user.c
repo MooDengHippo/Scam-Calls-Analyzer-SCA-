@@ -10,41 +10,50 @@
 
 // Convert suspicious score to textual risk level
 static const char* get_risk_level_description(float score){
+
     if(score >= 0.81f) return "SEVERE";
     else if(score >= 0.61f) return "HIGH";
     else if(score >= 0.41f) return "MEDIUM";
     else if(score >= 0.21f) return "LOW";
     else return "VERY LOW";
+
 }
 
 // Display suspicious score as a bar
 static void display_suspicious_score(float score){
+
     int bar = (int)(score * 20);
     printf("\nSuspicious Score: %6.2f %%\n[", score * 100);
     for(int i = 0; i < 20; ++i)
         putchar(i < bar ? '#' : '-');
     puts("]");
     printf("Risk Level: %s\n\n", get_risk_level_description(score));
+
 }
 
 // Reset visited flags
 static void reset_graph_visits(GraphNode *nodes[]){
+
     for(int i = 0; i < MAX_NODES; ++i)
         if(nodes[i]) nodes[i]->visited = 0;
+
 }
 
-// Recursive graph display with ASCII fallback
+// Recursive graph display with ASCII
 static void display_scam_graph(GraphNode *node, int level){
+
     if(!node || node->visited) return;
     node->visited = 1;
     for(int i = 0; i < level; ++i) printf("  ");
     printf("-- %s\n", node->phone);
     for(int i = 0; i < node->neighbor_count; ++i)
         display_scam_graph(node->neighbors[i], level + 1);
+
 }
 
 // Append a report to pending_reports.csv only
 static void report_number(const char *phone){
+
     FILE *fp = fopen("data/pending_reports.csv", "a");
     if(!fp){ perror("Could not open pending_reports.csv"); return; }
 
@@ -55,10 +64,12 @@ static void report_number(const char *phone){
     fprintf(fp, "%s,%s\n", phone, timestamp);
     fclose(fp);
     Logging_Write(LOG_INFO, "User reported number: %s", phone);
+
 }
 
 // User CLI loop
 void user_mode(HashTable *table, GraphNode *nodes[]){
+
     while(1){
         char raw[64];
         printf("\nEnter phone (q to return): ");
@@ -117,4 +128,5 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
             }
         }
     }
+
 }

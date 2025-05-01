@@ -11,7 +11,7 @@
  * - Option to report unknown numbers to the admin for review
  * Parameters:
  *   table -> Pointer to initialized HashTable
- *   nodes -> Graph node array for relationships
+ *   nodes -> Graph node array for keep relationships
  */
 void user_mode(HashTable *table, GraphNode *nodes[]);
 
