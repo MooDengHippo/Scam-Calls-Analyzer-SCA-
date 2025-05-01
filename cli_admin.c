@@ -139,6 +139,7 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
             puts("\nNo record or relationship found.");
         }
     }
+    
 }
 // Admin Menu
 void admin_mode(HashTable *table, GraphNode *nodes[]){
