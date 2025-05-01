@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hash_table.h"
+
 /*
  * Hash Function
- * ----------------------------------------
+ * ------------------------------------------------
  * Uses basic polynomial rolling hash: h = h*31 + c
  * Returns index into the table (mod TABLE_SIZE)
  */
@@ -18,7 +19,7 @@ static unsigned int hash_function(const char *key){
 }
 /*
  * Hash Table Initialization
- * ----------------------------------------
+ * ------------------------------------
  * Allocates a zero-initialized HashMap
  */
 HashTable* hash_table_init(void){
@@ -28,7 +29,7 @@ HashTable* hash_table_init(void){
 }
 /*
  * Insert/Update Record in HashMap
- * ----------------------------------------
+ * -------------------------------------------------------
  * If phone already exists --> update score + report count
  * Otherwise --> create a new ScamRecord and insert
  */
@@ -63,7 +64,7 @@ void hash_table_insert(HashTable *table, const char *phone, float score, int rep
 }
 /*
  * Lookup Record by Phone Number
- * ----------------------------------------
+ * ------------------------------------------------
  * Returns pointer to ScamRecord if found else NULL
  */
 ScamRecord* hash_table_lookup(HashTable *table, const char *phone){
@@ -84,7 +85,7 @@ ScamRecord* hash_table_lookup(HashTable *table, const char *phone){
 }
 /*
  * Delete Record by Phone Number
- * ----------------------------------------
+ * -------------------------------------------------
  * Removes a scam record from the hash table.
  * Returns 1 if successfully deleted, 0 if not found.
  */
@@ -111,7 +112,7 @@ int hash_table_delete(HashTable *table, const char *phone){
 }
 /*
  * Free Hash Table
- * ----------------------------------------
+ * --------------------------------------------------
  * Releases all memory associated with the Hash Table
  */
 void hash_table_free(HashTable *table){
