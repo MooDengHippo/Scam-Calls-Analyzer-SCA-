@@ -20,7 +20,6 @@ static char *trim(char *s){
     while(e > s && (*e == ' ' || *e == '\t' || *e == '\n' || *e == '\r')) *e-- = '\0';
     return s;
 }
-
 /*
  * Read CSV and populate Hash Table and Graph structure
  * - Format:

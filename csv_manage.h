@@ -25,6 +25,6 @@ int csv_write_data(const char *fname, HashTable *map);
  * - Format:
  *    E,<phone1>,<phone2>
  */
-int csv_write_edges(const char *fname, GraphNode *nodes[]);
+int csv_write_edges(const char *fname, GraphNode **nodes);
 
 #endif // CSV_MANAGE_H

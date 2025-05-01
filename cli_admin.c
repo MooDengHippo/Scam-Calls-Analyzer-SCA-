@@ -11,7 +11,7 @@
 
 // External CSV writing functions
 extern int csv_write_data(const char *fname, HashTable *map);
-extern int csv_write_edges(const char *fname, GraphNode *nodes);
+extern int csv_write_edges(const char *fname, GraphNode **nodes);
 /*
  * Process one pending report:
  * - Validate phone format
