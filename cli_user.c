@@ -88,6 +88,16 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
             printf("\nNumber found (reported %d times)\n", rec->report_count);
             display_suspicious_score(rec->suspicious_score);
 
+            // Show graph relationship even if record exists in DB
+            reset_graph_visits(nodes);
+            GraphNode *start = graph_get_node(nodes, norm);
+            if(start && start->neighbor_count > 0){
+                puts("Connected numbers in scam relationship:");
+                display_scam_graph(start, 0);
+            } else {
+                puts("No known relationships in graph.");
+            }
+
             printf("Send this number to admin for further inspection? (y/n): ");
             char ans2[8];
             if(fgets(ans2, sizeof ans2, stdin) && (ans2[0]=='y' || ans2[0]=='Y')){

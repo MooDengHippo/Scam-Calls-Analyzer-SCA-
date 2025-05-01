@@ -1,11 +1,10 @@
 #include "phone_format.h"
 
 static const char *SEA_CODES[] = {
-
     "+66", "+95", "+855", "+856", "+60", "+65",
     "+62", "+63", "+84", "+673", "+670"
-
 };
+
 static const int SEA_CODES_COUNT = sizeof(SEA_CODES) / sizeof(SEA_CODES[0]);
 /*
  * Normalize Phone
@@ -103,18 +102,20 @@ int Is_SEA_Country(const char *normalized){
  * Compute risk score based on region and number pattern
  * Used across csv_manage and admin module
  */
-float calculate_score(const char *phone, int report_count){
+float calculate_score(const char *phone, int report_count, int neighbor_count){
 
+    float base;
     if(!Is_SEA_Country(phone)) return 1.0f;
 
     if(strncmp(phone, "+66", 3) == 0){
-        if(strncmp(phone, "+662", 4) == 0) return fminf(1.0f, 0.5f + 0.05f * report_count);
-        return fminf(1.0f, 0.1f + 0.05f * report_count);
-    }
+        if(strncmp(phone, "+662", 4) == 0) base = 0.5f + 0.05f * report_count;
+        else                                base = 0.1f + 0.05f * report_count;
+    }else if(strncmp(phone, "+855", 4)==0 || strncmp(phone, "+95", 3)==0 || strncmp(phone, "+856", 4)==0)
+        base = 0.7f + 0.05f * report_count;
+    else
+        base = 0.8f + 0.05f * report_count;
 
-    if(strncmp(phone, "+855", 4)==0 || strncmp(phone, "+95", 3)==0 || strncmp(phone, "+856", 4)==0)
-        return fminf(1.0f, 0.7f + 0.05f * report_count);
-
-    return fminf(1.0f, 0.8f + 0.05f * report_count);
+    float bonus = fminf(0.2f, 0.05f * neighbor_count);
+    return fminf(1.0f, base + bonus);
 
 }
