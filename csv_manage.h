@@ -1,6 +1,5 @@
 #ifndef CSV_MANAGE_H
 #define CSV_MANAGE_H
-
 #include "hash_table.h"
 #include "graph.h"
 
@@ -15,13 +14,11 @@
  *   Number of records loaded or -1 on error
  */
 int csv_read_data(const char *record_file, const char *edge_file, HashTable *table, GraphNode *nodes[]);
-
 /*
  * Write phone records from hash table to CSV
  * Format: R, <phone>, <score>, <report_count>
  */
 int csv_write_data(const char *fname, HashTable *table);
-
 /*
  * Write graph relationships to CSV
  * Format: E, <phoneA>, <phoneB>
