@@ -7,7 +7,7 @@
  * - Populates Hash Table with suspicious numbers
  * - Populates Graph with phone-to-phone relationships
  * - Format:
- *     R,<phone>,<suspicious_score 0–1>,<report_count>
+ *     R,<phone>,<suspicious_score 0 to 1>,<report_count>
  *     E,<phone1>,<phone2>
  * - Returns number of valid rows parsed, or -1 on error
  */
