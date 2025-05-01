@@ -4,7 +4,7 @@
 #include "graph.h"
 /*
  * Admin Mode Entry Point
- * -------------------------
+ * ---------------------------------------------------------------------
  * Handles administrator-side CLI interaction:
  * - Add suspicious phone records
  * - Add relationship links between phone numbers
