@@ -4,6 +4,7 @@
 #include "csv_manage.h"
 #include "phone_format.h"
 #include "hash_table.h"
+#include "graph.h"
 /*
  * Trim
  * -------------------------
@@ -24,7 +25,7 @@ static char *trim(char *s){
 /*
  * Read CSV and populate Hash Table and Graph structure
  * - Format:
- *   R, <phone>, <score 0‑1>, <reports> -> Record of suspicious number
+ *   R, <phone>, <score 0–1>, <reports> -> Record of suspicious number
  *   E, <phoneA>, <phoneB>              -> Relationship between numbers
  * - Automatically normalize phone numbers
  * - Boosts risk if number is not Thai (+66)
@@ -41,64 +42,68 @@ int csv_read_data(const char *fname, HashTable *table, GraphNode *nodes[]){
     char line[256];
     int cnt = 0;
 
+    // Step 1: read edges first
     while(fgets(line, sizeof(line), fp)){
         char *tok = strtok(line, ",");
         if(!tok) continue;
         tok = trim(tok);
 
-        if(*tok == '#') continue; // Ignore comment lines
+        if(*tok == '#' || strcmp(tok, "E") != 0) continue;
 
-        if(strcmp(tok, "R") == 0){
-            // Handle record row: R,<phone>,<score>,<report_count>
-            char *p = strtok(NULL, ",");
-            char *score = strtok(NULL, ",");
-            char *rep = strtok(NULL, ",");
-            if(!p || !score) continue;
+        char *a = strtok(NULL, ",");
+        char *b = strtok(NULL, ",");
+        if(!a || !b) continue;
 
-            p = trim(p);
-            score = trim(score);
+        a = trim(a);
+        b = trim(b);
 
-            char norm[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(p, norm, sizeof(norm)) < 0) continue;
+        char na[MAX_PHONE_LENGTH], nb[MAX_PHONE_LENGTH];
+        if(Normalize_Phone(a, na, sizeof(na)) < 0 || Normalize_Phone(b, nb, sizeof(nb)) < 0) continue;
 
-            int rc = rep ? atoi(trim(rep)) : 1;
-            float sc = calculate_score(norm, rc);
+        graph_add_edge(nodes, na, nb);
+    }
 
-            hash_table_insert(table, norm, sc, rc);
-            cnt++;
+    rewind(fp);
 
-        }else if(strcmp(tok, "E") == 0){
-            // Handle edge row: E,<phoneA>,<phoneB>
-            char *a = strtok(NULL, ",");
-            char *b = strtok(NULL, ",");
-            if(!a || !b) continue;
+    // Step 2: now read records
+    while(fgets(line, sizeof(line), fp)){
+        char *tok = strtok(line, ",");
+        if(!tok) continue;
+        tok = trim(tok);
 
-            a = trim(a);
-            b = trim(b);
+        if(*tok == '#' || strcmp(tok, "R") != 0) continue;
 
-            char na[MAX_PHONE_LENGTH], nb[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(a, na, sizeof(na)) < 0 || Normalize_Phone(b, nb, sizeof(nb)) < 0) continue;
+        char *p = strtok(NULL, ",");
+        char *score = strtok(NULL, ",");
+        char *rep = strtok(NULL, ",");
+        if(!p || !score) continue;
 
-            graph_add_edge(nodes, na, nb);
-            cnt++;
-        }
+        p = trim(p);
+        score = trim(score);
+
+        char norm[MAX_PHONE_LENGTH];
+        if(Normalize_Phone(p, norm, sizeof(norm)) < 0) continue;
+
+        int rc = rep ? atoi(trim(rep)) : 1;
+        GraphNode *node = graph_get_node(nodes, norm);
+        int nc = node ? node->neighbor_count : 0;
+        float sc = calculate_score(norm, rc, nc);
+
+        hash_table_insert(table, norm, sc, rc);
+        cnt++;
     }
     fclose(fp);
     return cnt;
 
 }
 /*
- * Write current map data back to CSV
- * - Format: R,<phone>,<score>,<report_count>
- * - Used on program exit to persist data
+ * Write phone records from hash table to CSV
+ * Format: R, <phone>, <score>, <report_count>
  */
 int csv_write_data(const char *fname, HashTable *table){
 
     FILE *fp = fopen(fname, "w");
-    if(!fp){
-        perror("CSV write");
-        return -1;
-    }
+    if(!fp) return -1;
 
     for(int i = 0; i < TABLE_SIZE; ++i){
         ScamRecord *rec = table->buckets[i];
@@ -109,35 +114,25 @@ int csv_write_data(const char *fname, HashTable *table){
     }
     fclose(fp);
     return 0;
-
 }
 /*
  * Write graph relationships to CSV
- * - Appends edge information to file as: E,<phone1>,<phone2>
- * - Prevents duplicate bidirectional writes (A,B and B,A)
+ * Format: E, <phoneA>, <phoneB>
  */
 int csv_write_edges(const char *fname, GraphNode *nodes[]){
 
-    FILE *fp = fopen(fname, "a"); // Append
-    if(!fp){
-        perror("CSV write edge");
-        return -1;
-    }
+    FILE *fp = fopen(fname, "a");
+    if(!fp) return -1;
 
     for(int i = 0; i < MAX_NODES; ++i){
-        GraphNode *n = nodes[i];
-        if(!n) continue;
-
-        for(int j = 0; j < n->neighbor_count; ++j){
-            GraphNode *nb = n->neighbors[j];
-
-            // Avoid writing duplicate edge in both directions
-            if(strcmp(n->phone, nb->phone) < 0){
-                fprintf(fp, "E,%s,%s\n", n->phone, nb->phone);
+        if(nodes[i]){
+            GraphNode *n = nodes[i];
+            for(int j = 0; j < n->neighbor_count; ++j){
+                if(strcmp(n->phone, n->neighbors[j]->phone) < 0)
+                    fprintf(fp, "E,%s,%s\n", n->phone, n->neighbors[j]->phone);
             }
         }
     }
     fclose(fp);
     return 0;
-    
 }
