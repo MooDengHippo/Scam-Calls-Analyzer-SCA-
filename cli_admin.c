@@ -13,6 +13,7 @@
 // External CSV writing functions
 extern int csv_write_data(const char *fname, HashTable *map);
 extern int csv_write_edges(const char *fname, GraphNode **nodes);
+
 // Update report to scam numbers
 static void accept_pending_report(const char *line, HashTable *table, GraphNode *nodes[]){
 
@@ -141,6 +142,39 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
     }
     
 }
+// Convert suspicious score to textual risk level
+static const char* get_risk_level_description(float score){
+
+    if(score >= 0.81f) return "SEVERE";
+    else if(score >= 0.61f) return "HIGH";
+    else if(score >= 0.41f) return "MEDIUM";
+    else if(score >= 0.21f) return "LOW";
+    else return "VERY LOW";
+
+}
+// Show all scam records in clean table format
+static void view_formatted_reports(HashTable *table){
+
+    puts("\n--- Scam Report Table ---");
+    printf("=============================================\n");
+    printf("|  Phone Number   | Reports |  Risk Level   |\n");
+    printf("---------------------------------------------\n");
+
+    for(int i = 0; i < TABLE_SIZE; ++i){
+        ScamRecord *rec = table->buckets[i];
+        while(rec){
+            printf("|  %-15s |   %-6d |  %-11s |\n",
+                rec->phone,
+                rec->report_count,
+                get_risk_level_description(rec->suspicious_score));
+            rec = rec->next;
+        }
+    }
+
+    printf("=============================================\n");
+    Logging_Write(LOG_INFO, "Admin viewed formatted scam number reports");
+
+}
 // Admin Menu
 void admin_mode(HashTable *table, GraphNode *nodes[]){
 
@@ -150,8 +184,9 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
         puts(" 2) Add relationship edge");
         puts(" 3) Delete suspicious phone record");
         puts(" 4) View pending reports");
-        puts(" 5) Analyze number");
-        puts(" 6) Back to main menu");
+        puts(" 5) View formatted scam numbers table");
+        puts(" 6) Analyze number");
+        puts(" 7) Back to main menu");
         printf("Select: ");
 
         int choice = 0;
@@ -239,12 +274,14 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
         }else if(choice == 4){
             view_pending_reports(table, nodes);
         }else if(choice == 5){
-            analyze_number(table, nodes);
+            view_formatted_reports(table);
         }else if(choice == 6){
-            break;
+            analyze_number(table, nodes);
+        }else if(choice == 7){
             Logging_Write(LOG_INFO, "Admin exited Admin Mode");
+            break;
         }else{
-            puts("Invalid selection. Please choose between 1 and 6.");
+            puts("Invalid selection. Please choose between 1 and 7.");
             continue;
         }
     }
