@@ -212,9 +212,9 @@ ___________________________________________________________________
 │   ├── app.log                   # Application Logs
 ├── 📁 docs                         # Documentation
 │   ├── README.md                 # Project Overview & Guide
-|   ├── CODESTANDARD.md           # Define Coding Style
-│   ├── Scam Calls Analyzer.pdf   # Full Project Report
-│   ├── test_case.txt             # Test Case Combination
+|   ├── Scam Calls Analyzer.pdf   # Full Project Report
+│   ├── Code Standard.txt         # Define Coding Style
+│   ├── test_case.txt             # Test Case Combination 
 |
 └────── sca.exe                   # Program Execution
 ___________________________________________________________________
