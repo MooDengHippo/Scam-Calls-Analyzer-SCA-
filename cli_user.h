@@ -2,6 +2,7 @@
 #define CLI_USER_H
 #include "hash_table.h"
 #include "graph.h"
+
 /*
  * User Mode Entry Point
  * ---------------------------------------------------------
