@@ -27,6 +27,7 @@ GraphNode *graph_get_node(GraphNode *nodes[], const char *phone){
 // Check if node 'a' is directly connected to node 'b'.
 // Used internally to detect existing edges between two GraphNode pointers.
 static int already_connected_internal(GraphNode *a, GraphNode *b){
+
     if(!a || !b) return 0;
     for(int i = 0; i < a->neighbor_count; ++i){
         if(strcmp(a->neighbors[i]->phone, b->phone) == 0){
@@ -34,14 +35,17 @@ static int already_connected_internal(GraphNode *a, GraphNode *b){
         }
     }
     return 0;
+
 }
 
 // Public interface to check if two phone numbers are already connected in the graph.
 // Converts phone numbers to GraphNode pointers and checks connection.
 int already_connected(GraphNode *nodes[], const char *phoneA, const char *phoneB){
+
     GraphNode *a = graph_get_node(nodes, phoneA);
     GraphNode *b = graph_get_node(nodes, phoneB);
     return already_connected_internal(a, b);
+
 }
 /*
  * Add a bidirectional edge between two phone numbers.
@@ -149,6 +153,7 @@ void graph_remove_edge(GraphNode *nodes[], const char *phoneA, const char *phone
             break;
         }
     }
+    
 }
 /*
  * Frees a graph node safely. Clears neighbors and resets status.
