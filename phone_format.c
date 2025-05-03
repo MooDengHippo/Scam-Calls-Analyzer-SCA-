@@ -1,20 +1,22 @@
 #include "phone_format.h"
 
 static const char *SEA_CODES[] = {
+
     "+66", "+95", "+855", "+856", "+60", "+65",
     "+62", "+63", "+84", "+673", "+670"
+
 };
 
 static const int SEA_CODES_COUNT = sizeof(SEA_CODES) / sizeof(SEA_CODES[0]);
 /*
  * Normalize Phone
- * -------------------------
+ * -------------------------------------------------------------------
  * Converts a raw phone number into a normalized international format.
  * If Thai number starts with '0', it converts to '+66'.
  */
 int Normalize_Phone(const char *raw_input, char *normalized_out, size_t max_size){
 
-    if (!raw_input || !normalized_out || max_size < 5) return -1;
+    if(!raw_input || !normalized_out || max_size < 5) return -1;
 
     char buffer[MAX_PHONE_LENGTH * 2] = {0};
     size_t j = 0;
@@ -48,13 +50,13 @@ int Normalize_Phone(const char *raw_input, char *normalized_out, size_t max_size
 }
 /*
  * Get Country Code
- * -------------------------
+ * ---------------------------------------------------
  * Extracts the calling code from a normalized number.
- * Example: "+66812345678" → "+66"
+ * Example: "+66812345678" -> "+66"
  */
 int Get_Country_Code(const char *normalized, char *code_out, size_t code_out_size){
 
-    if (!normalized || normalized[0] != '+' || code_out_size == 0) return -1;
+    if(!normalized || normalized[0] != '+' || code_out_size == 0) return -1;
 
     size_t longest = 0;
     const char *matched_code = NULL;
@@ -82,7 +84,7 @@ int Get_Country_Code(const char *normalized, char *code_out, size_t code_out_siz
 }
 /*
  * Is SEA Country
- * -------------------------
+ * --------------------------------------------------
  * Checks if a phone number belongs to a SEA country.
  */
 int Is_SEA_Country(const char *normalized){
@@ -99,7 +101,7 @@ int Is_SEA_Country(const char *normalized){
 }
 /*
  * Calculate Score
- * -------------------------
+ * -----------------------------------------------------
  * Compute risk score based on region and number pattern
  * Used across csv_manage and admin module
  */
