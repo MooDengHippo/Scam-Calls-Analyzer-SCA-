@@ -46,14 +46,14 @@ The Scam Calls Analyzer (SCA) is a phone number risk evaluation system built wit
 - **Input phone number**
     - **If found:** display score, report count, and connected numbers.
     - **If not found:**
-         - **If outside SEA region:** flagged HIGH risk.
+         - **If outside SEA region:** flagged Danger risk.
          - **If SEA:** explore relationships via graph traversal.
 
 - **Report option:** Send number to admin for review.
 
 ### 👑 Admin Mode
 
-- **Add/Update Number:** Add new scammer or increment reports.
+- **Add/Edit Number:** Add new scammer or edit increment data.
 - **Delete Record:** Remove scam number from database.
 - **Analyze Number:** Check report stats and connections.
 - **Link Numbers:** Build bidirectional scam relationships.
