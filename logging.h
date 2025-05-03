@@ -8,7 +8,7 @@ typedef enum{
     LOG_ERROR
     
 }LogLevel;
-// Initialize logging system (call once)
+// Initialize logging system
 void Logging_Init(const char *log_file);
 // Log message with timestamp and level
 void Logging_Write(LogLevel level, const char *format, ...);
