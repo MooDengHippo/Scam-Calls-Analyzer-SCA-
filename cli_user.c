@@ -18,7 +18,6 @@ static const char* get_risk_level_description(float score){
     else return "VERY LOW";
 
 }
-
 // Display suspicious score as a bar
 static void display_suspicious_score(float score){
 
@@ -29,7 +28,6 @@ static void display_suspicious_score(float score){
     puts("]\n");
 
 }
-
 // Display risk table for a specific record (user version)
 static void display_user_risk_table(ScamRecord *rec){
 
@@ -43,7 +41,6 @@ static void display_user_risk_table(ScamRecord *rec){
     printf("=============================================\n");
 
 }
-
 // Reset visited flags
 static void reset_graph_visits(GraphNode *nodes[]){
 
@@ -51,7 +48,6 @@ static void reset_graph_visits(GraphNode *nodes[]){
         if(nodes[i]) nodes[i]->visited = 0;
 
 }
-
 // Enhanced display of scam graph with visual indentation
 static void display_graph_ui(GraphNode *node, int level){
 
@@ -65,7 +61,6 @@ static void display_graph_ui(GraphNode *node, int level){
         display_graph_ui(node->neighbors[i], level + 1);
 
 }
-
 // Append a report to pending_reports.csv only
 static void report_number(const char *phone){
 
@@ -81,7 +76,6 @@ static void report_number(const char *phone){
     Logging_Write(LOG_INFO, "User reported number: %s", phone);
 
 }
-
 // User CLI loop
 void user_mode(HashTable *table, GraphNode *nodes[]){
 
@@ -97,7 +91,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
 
         char norm[MAX_PHONE_LENGTH];
         if(Normalize_Phone(raw, norm, sizeof(norm)) < 0){
-            puts("\nInvalid phone format!\n");
+            puts("\nInvalid phone format.\n");
             Logging_Write(LOG_WARN, "User entered invalid phone: %s", raw);
             continue;
         }

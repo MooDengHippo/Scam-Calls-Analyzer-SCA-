@@ -61,15 +61,15 @@ static void display_graph_ui(GraphNode *node, int level){
 
 }
 // Pull and normalize phone
-static int input_and_normalize_phone(char *prompt, char *normalized) {
+static int input_and_normalize_phone(char *prompt, char *normalized){
+
     char raw[64];
     printf("%s", prompt);
-    if (!fgets(raw, sizeof raw, stdin)) return -1;
-    if (raw[0] == 'q' || raw[0] == 'Q') return -1;
+    if(!fgets(raw, sizeof raw, stdin)) return -1;
+    if(raw[0] == 'q' || raw[0] == 'Q') return -1;
     return Normalize_Phone(raw, normalized, MAX_PHONE_LENGTH);
+
 }
-// BFS view format
-void bfs_print_group(GraphNode *nodes[], const char *start, int visited[]);
 // Add record or link graph
 static void admin_add(HashTable *table, GraphNode *nodes[]){
 
@@ -85,7 +85,7 @@ static void admin_add(HashTable *table, GraphNode *nodes[]){
     if(input[0] == '1'){
         char norm[MAX_PHONE_LENGTH];
         if(input_and_normalize_phone("Enter phone number to add: ", norm) < 0){
-            puts("\nInvalid phone format or cancelled.\n");
+            puts("\nInvalid phone format.\n");
             return;
         }
 
@@ -102,7 +102,7 @@ static void admin_add(HashTable *table, GraphNode *nodes[]){
                 Logging_Write(LOG_INFO, "Admin increased report for %s", norm);
                 csv_write_data("data/scam_numbers.csv", table);
             }else if(ans[0] != 'n' && ans[0] != 'N'){
-                puts("\nInvalid input. Returning to main menu.\n");
+                puts("\nInvalid input.\n");
             }
             return;
         }
@@ -132,7 +132,7 @@ static void admin_add(HashTable *table, GraphNode *nodes[]){
 
         int existed = already_connected(nodes, normA, normB);
         if(existed){
-            puts("\nThis edge already exists. Returning to main menu.\n");
+            puts("\nThis edge already exists.\n");
             return;
         }
 
@@ -142,15 +142,15 @@ static void admin_add(HashTable *table, GraphNode *nodes[]){
         if(r1) r1->suspicious_score = calculate_score(normA, r1->report_count, graph_get_node(nodes, normA)->neighbor_count);
         if(r2) r2->suspicious_score = calculate_score(normB, r2->report_count, graph_get_node(nodes, normB)->neighbor_count);
 
-        printf("\nEdge added. Increase risk score due to connection? (y/n): ");
+        printf("\nEdge will add. Increase risk score due to connection? (y/n): ");
         char ans[8];
         if(!fgets(ans, sizeof ans, stdin)) return;
         if(ans[0] == 'y' || ans[0] == 'Y'){
             if(r1) r1->report_count++;
             if(r2) r2->report_count++;
-            Logging_Write(LOG_INFO, "Increased report count for new edge connection: %s <-> %s", normA, normB);
+            Logging_Write(LOG_INFO, "Increased score for new edge connection: %s <-> %s", normA, normB);
         }else if(ans[0] != 'n' && ans[0] != 'N'){
-            puts("\nInvalid input. Returning to main menu.\n");
+            puts("\nInvalid input.\n");
         }
         if(r1) r1->suspicious_score = calculate_score(normA, r1->report_count, graph_get_node(nodes, normA)->neighbor_count);
         if(r2) r2->suspicious_score = calculate_score(normB, r2->report_count, graph_get_node(nodes, normB)->neighbor_count);
@@ -163,9 +163,11 @@ static void admin_add(HashTable *table, GraphNode *nodes[]){
     }else{
         puts("\nInvalid choice.\n");
     }
+
 }
 // Edit a Record or Relationship Edge in the system
 static void admin_edit(HashTable *table, GraphNode *nodes[]){
+
     puts("\nEdit:");
     puts("1) Record");
     puts("2) Relationship Edge");
@@ -179,7 +181,7 @@ static void admin_edit(HashTable *table, GraphNode *nodes[]){
         // Edit an existing scam record entry
         char norm[MAX_PHONE_LENGTH];
         if(input_and_normalize_phone("Enter phone to edit: ", norm) < 0){
-            puts("\nInvalid phone format or cancelled.\n");
+            puts("\nInvalid phone format.\n");
             return;
         }
 
@@ -227,7 +229,6 @@ static void admin_edit(HashTable *table, GraphNode *nodes[]){
                 new_score = score;
             }
         }
-
         // Confirm changes
         printf("\nConfirm changes?\nNew Phone: %s\nNew Report: %d\nNew Score: %.2f\n(y/n): ", new_phone, new_report, new_score);
         char ans[8];
@@ -236,7 +237,6 @@ static void admin_edit(HashTable *table, GraphNode *nodes[]){
             puts("\nEdit cancelled.\n");
             return;
         }
-
         // Apply changes to the table
         if(strcmp(norm, new_phone) != 0){
             ScamRecord *exist = hash_table_lookup(table, new_phone);
@@ -258,11 +258,9 @@ static void admin_edit(HashTable *table, GraphNode *nodes[]){
 
     }else if(choice[0] == '2'){
         // Edit an existing relationship edge by replacing it with a new connection
-
         char oldA[MAX_PHONE_LENGTH], oldB[MAX_PHONE_LENGTH];
         if(input_and_normalize_phone("Enter current Phone A: ", oldA) < 0) return;
         if(input_and_normalize_phone("Enter current Phone B: ", oldB) < 0) return;
-
         // Check if the current edge exists in the graph
         if(!already_connected(nodes, oldA, oldB)){
             puts("\nNo existing edge found between the numbers. Please check the input.\n");
@@ -272,13 +270,11 @@ static void admin_edit(HashTable *table, GraphNode *nodes[]){
         char newA[MAX_PHONE_LENGTH], newB[MAX_PHONE_LENGTH];
         if(input_and_normalize_phone("Enter new Phone A: ", newA) < 0) return;
         if(input_and_normalize_phone("Enter new Phone B: ", newB) < 0) return;
-
         // Prevent replacing with an edge that already exists
         if(already_connected(nodes, newA, newB)){
             puts("\nNew edge already exists. Edit aborted.\n");
             return;
         }
-
         // Confirm the edge update with y/n and handle invalid input
         char confirm[8];
         while(1){
@@ -297,16 +293,18 @@ static void admin_edit(HashTable *table, GraphNode *nodes[]){
                 puts("\nEdit cancelled.\n");
                 return;
             }else{
-                puts("\nInvalid input. Please enter y or n.\n");
+                puts("\nInvalid input.\n");
             }
         }
 
     }else{
         puts("\nInvalid choice.\n");
     }
+
 }
 // Delete a Record or Relationship Edge from the system
 static void admin_delete(HashTable *table, GraphNode *nodes[]){
+
     puts("\nDelete:");
     puts("1) Record");
     puts("2) Relationship Edge");
@@ -320,7 +318,7 @@ static void admin_delete(HashTable *table, GraphNode *nodes[]){
         // Delete a record from the hash table
         char norm[MAX_PHONE_LENGTH];
         if(input_and_normalize_phone("Enter phone number to delete: ", norm) < 0){
-            puts("\nInvalid phone format or cancelled.\n");
+            puts("\nInvalid phone format.\n");
             return;
         }
 
@@ -379,11 +377,13 @@ static void admin_delete(HashTable *table, GraphNode *nodes[]){
     }else{
         puts("\nInvalid choice.\n");
     }
+
 }
 // View and accept pending reports from user-submitted CSV
 static void admin_view_pending(HashTable *table, GraphNode *nodes[]){
+
     FILE *fp = fopen("data/pending_reports.csv", "r");
-    if (!fp) {
+    if(!fp){
         puts("\nCould not open pending report file.\n");
         return;
     }
@@ -394,11 +394,11 @@ static void admin_view_pending(HashTable *table, GraphNode *nodes[]){
     char times[100][32];
 
     // Read CSV lines with 2 columns: phone, timestamp
-    while (fgets(line, sizeof line, fp)) {
+    while(fgets(line, sizeof line, fp)){
         char *phone = strtok(line, ",");
         char *time = strtok(NULL, "\n");
 
-        if (phone && time){
+        if(phone && time){
             strncpy(phones[count], phone, MAX_PHONE_LENGTH);
             phones[count][MAX_PHONE_LENGTH - 1] = '\0';
             strncpy(times[count], time, 32);
@@ -408,7 +408,7 @@ static void admin_view_pending(HashTable *table, GraphNode *nodes[]){
     }
     fclose(fp);
 
-    if (count == 0){
+    if(count == 0){
         puts("\nNo pending reports found.\n");
         return;
     }
@@ -460,9 +460,11 @@ static void admin_view_pending(HashTable *table, GraphNode *nodes[]){
             puts("\nInvalid input. Please enter y or n.\n");
         }
     }
+
 }
 // View formatted tables of all scam records and graph relationships
 static void admin_view_format(HashTable *table, GraphNode *nodes[]){
+
     puts("\nView Format:");
     puts("1) Scam Record Table");
     puts("2) Scam Relationship Graph");
@@ -498,33 +500,36 @@ static void admin_view_format(HashTable *table, GraphNode *nodes[]){
     }else{
         puts("\nInvalid choice.\n");
     }
+
 }
 // Analyze number like user
-static void admin_analyze(HashTable *table, GraphNode *nodes[]) {
+static void admin_analyze(HashTable *table, GraphNode *nodes[]){
+
     char norm[MAX_PHONE_LENGTH];
-    if (input_and_normalize_phone("Enter phone to analyze: ", norm) < 0) {
-        puts("\nInvalid phone format or cancelled.\n");
+    if(input_and_normalize_phone("Enter phone to analyze: ", norm) < 0){
+        puts("\nInvalid phone format.\n");
         return;
     }
 
     ScamRecord *rec = hash_table_lookup(table, norm);
-    if (rec) {
+    if(rec){
         display_suspicious_score(rec->suspicious_score);
         display_user_risk_table(rec);
-    } else {
+    }else{
         puts("\nNot found in database.\n");
     }
 
     reset_graph_visits(nodes);
     GraphNode *start = graph_get_node(nodes, norm);
-    if (start && start->neighbor_count > 0) {
+    if(start && start->neighbor_count > 0){
         puts("\nConnected numbers:\n");
         display_graph_ui(start, 0);
-    } else {
+    }else{
         puts("\nNo links.\n");
     }
 
     Logging_Write(LOG_INFO, "Admin analyzed number: %s", norm);
+
 }
 // Main admin loop
 void admin_mode(HashTable *table, GraphNode *nodes[]){
@@ -534,11 +539,11 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
         puts("\n=====================");
         puts("Admin Menu:");
         puts("1) Add Record/Edge");
-        puts("2) Edit Record");
+        puts("2) Edit Record/Edge");
         puts("3) Delete Record/Edge");
         puts("4) View Pending Reports");
         puts("5) View Formatted Data");
-        puts("6) Analyze Number");
+        puts("6) Analyze Phone Number");
         puts("7) Back to Main Menu");
         printf("Enter choice: ");
 
@@ -560,4 +565,5 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                 puts("\nInvalid choice.\n");
         }
     }
+    
 }
