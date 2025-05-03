@@ -3,6 +3,7 @@
         "stddef.h": "c",
         "hash_map.h": "c",
         "string.h": "c",
-        "graph.h": "c"
+        "graph.h": "c",
+        "phone_format.h": "c"
     }
 }

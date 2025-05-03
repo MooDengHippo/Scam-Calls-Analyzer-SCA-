@@ -24,13 +24,24 @@ GraphNode *graph_get_node(GraphNode *nodes[], const char *phone){
     return NULL;
 
 }
-// Helper: Check if node a is already connected to node b
-static int already_connected(GraphNode *a, GraphNode *b){
-
+// Check if node 'a' is directly connected to node 'b'.
+// Used internally to detect existing edges between two GraphNode pointers.
+static int already_connected_internal(GraphNode *a, GraphNode *b){
+    if(!a || !b) return 0;
     for(int i = 0; i < a->neighbor_count; ++i){
-        if(a->neighbors[i] == b) return 1;
+        if(strcmp(a->neighbors[i]->phone, b->phone) == 0){
+            return 1;
+        }
     }
     return 0;
+}
+
+// Public interface to check if two phone numbers are already connected in the graph.
+// Converts phone numbers to GraphNode pointers and checks connection.
+int already_connected(GraphNode *nodes[], const char *phoneA, const char *phoneB){
+    GraphNode *a = graph_get_node(nodes, phoneA);
+    GraphNode *b = graph_get_node(nodes, phoneB);
+    return already_connected_internal(a, b);
 }
 /*
  * Add a bidirectional edge between two phone numbers.
@@ -42,10 +53,10 @@ void graph_add_edge(GraphNode *nodes[], const char *a, const char *b){
     GraphNode *nb = graph_get_node(nodes, b);
     if(!na || !nb) return;
 
-    if(!already_connected(na, nb) && na->neighbor_count < MAX_NEIGHBORS)
+    if(!already_connected(nodes, na->phone, nb->phone) && na->neighbor_count < MAX_NEIGHBORS)
         na->neighbors[na->neighbor_count++] = nb;
 
-    if(!already_connected(nb, na) && nb->neighbor_count < MAX_NEIGHBORS)
+    if(!already_connected(nodes, nb->phone, na->phone) && nb->neighbor_count < MAX_NEIGHBORS)
         nb->neighbors[nb->neighbor_count++] = na;
 
 }

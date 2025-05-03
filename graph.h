@@ -26,6 +26,8 @@ void graph_bfs(GraphNode *nodes[], const char *start_phone);
 void graph_dfs(GraphNode *nodes[], const char *start_phone);
 // Delete edge
 void graph_remove_edge(GraphNode *nodes[], const char *phoneA, const char *phoneB);
+// Connect graph
+int already_connected(GraphNode *nodes[], const char *phoneA, const char *phoneB);
 // Free a graph node and clear its data.
 void graph_node_free(GraphNode *node);
 
