@@ -3,7 +3,7 @@
 
 /*
  * Queue Initialization
- * ----------------------------------------
+ * ------------------------------------
  * Allocates and returns an empty queue.
  */
 Queue *queue_init(void){
@@ -17,7 +17,7 @@ Queue *queue_init(void){
 }
 /*
  * Enqueue
- * ----------------------------------------
+ * -----------------------------------------
  * Adds a GraphNode to the end of the queue.
  */
 void enqueue(Queue *queue, GraphNode *node){
@@ -40,7 +40,7 @@ void enqueue(Queue *queue, GraphNode *node){
 }
 /*
  * Dequeue
- * ----------------------------------------
+ * ----------------------------------------------------------
  * Removes the front GraphNode from the queue and returns it.
  * Returns NULL if the queue is empty.
  */
@@ -62,7 +62,7 @@ GraphNode *dequeue(Queue *queue){
 }
 /*
  * Queue Is Empty
- * ----------------------------------------
+ * ---------------------------------------------
  * Returns 1 if the queue is empty, 0 otherwise.
  */
 int queue_is_empty(Queue *queue){
@@ -72,7 +72,7 @@ int queue_is_empty(Queue *queue){
 }
 /*
  * Queue Free
- * ----------------------------------------
+ * -----------------------------------
  * Frees all memory used by the queue.
  */
 void queue_free(Queue *queue){
