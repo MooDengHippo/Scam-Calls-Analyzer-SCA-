@@ -108,7 +108,7 @@ int csv_read_data(const char *record_file, const char *edge_file, HashTable *tab
 int csv_write_data(const char *fname, HashTable *table){
 
     FILE *fp = fopen(fname, "w");
-    if (!fp) return -1;
+    if(!fp) return -1;
 
     for(int i = 0; i < TABLE_SIZE; ++i){
         ScamRecord *rec = table->buckets[i];
@@ -168,5 +168,5 @@ void remove_pending_index(int index){
     fclose(temp);
     remove("data/pending_reports.csv");
     rename("data/pending_temp.csv", "data/pending_reports.csv");
-    
+
 }
