@@ -95,7 +95,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
                 puts("Connected numbers in scam relationship:");
                 display_scam_graph(start, 0);
             }else{
-                puts("No known relationships in graph.");
+                puts("\nNo known relationships in graph.\n");
             }
 
             printf("Send this number to admin for further inspection? (y/n): ");
