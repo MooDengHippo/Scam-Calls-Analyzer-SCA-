@@ -214,7 +214,7 @@ ___________________________________________________________________
 │   ├── README.md                 # Project Overview & Guide
 |   ├── Scam Calls Analyzer.pdf   # Full Project Report
 │   ├── Code Standard.txt         # Define Coding Style
-│   ├── test_case.txt             # Test Case Combination 
+│   ├── Test Cases.txt             # Test Case Combination 
 |
 └────── sca.exe                   # Program Execution
 ___________________________________________________________________
