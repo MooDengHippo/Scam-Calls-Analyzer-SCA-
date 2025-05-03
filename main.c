@@ -62,7 +62,7 @@ int main(void){
             Logging_Write(LOG_INFO, "User exited the program");
             break;
         }else{
-            puts("Invalid choice! Please select 1-3.");
+            puts("\nInvalid choice! Please select 1-3.\n");
         }
     }
 
