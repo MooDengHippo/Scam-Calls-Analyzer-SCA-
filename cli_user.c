@@ -77,7 +77,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
 
         char norm[MAX_PHONE_LENGTH];
         if(Normalize_Phone(raw, norm, sizeof(norm)) < 0){
-            puts("Invalid phone format!\n");
+            puts("\nInvalid phone format!\n");
             Logging_Write(LOG_WARN, "User entered invalid phone: %s", raw);
             continue;
         }
@@ -94,7 +94,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
             if(start && start->neighbor_count > 0){
                 puts("Connected numbers in scam relationship:");
                 display_scam_graph(start, 0);
-            } else {
+            }else{
                 puts("No known relationships in graph.");
             }
 
@@ -102,14 +102,14 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
             char ans2[8];
             if(fgets(ans2, sizeof ans2, stdin) && (ans2[0]=='y' || ans2[0]=='Y')){
                 report_number(norm);
-                puts("Number sent to admin. Thank you!\n");
+                puts("\nNumber sent to admin. Thank you!\n");
             }
 
             Logging_Write(LOG_INFO, "Phone found: %s (score: %.2f, reports: %d)",
                           norm, rec->suspicious_score, rec->report_count);
         }else{
             if(!Is_SEA_Country(norm)){
-                puts("\nForeign (Non-SEA) number - HIGH RISK!\n");
+                puts("\nForeign (Non-SEA) number - DANGER!\n");
                 Logging_Write(LOG_WARN, "Foreign number - Not SEA: %s", norm);
             }else{
                 puts("\nNot found - exploring relationship graph:\n");
@@ -119,7 +119,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
                 if(start && start->neighbor_count > 0){
                     display_scam_graph(start, 0);
                 }else{
-                    puts("No relationships found!\n");
+                    puts("\nNo relationships found!\n");
                 }
             }
 
@@ -127,7 +127,7 @@ void user_mode(HashTable *table, GraphNode *nodes[]){
             char ans[8];
             if(fgets(ans, sizeof ans, stdin) && (ans[0] == 'y' || ans[0] == 'Y')){
                 report_number(norm);
-                puts("Number reported. Thank you!\n");
+                puts("\nNumber reported. Thank you!\n");
                 Logging_Write(LOG_INFO, "User reported unknown number: %s", norm);
             }
         }
