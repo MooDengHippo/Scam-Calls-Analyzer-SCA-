@@ -8,7 +8,7 @@
 
 /*
  * Trim
- * -------------------------
+ * ------------------------------------------------------
  * Remove leading and trailing whitespace, tabs, newlines
  * Parameters:
  *   str -> Input string to trim
@@ -144,20 +144,21 @@ int csv_write_edges(const char *fname, GraphNode *nodes[]){
 
 }
 // Remove a line from pending_reports.csv by index
-void remove_pending_index(int index) {
+void remove_pending_index(int index){
+
     FILE *fp = fopen("data/pending_reports.csv", "r");
-    if (!fp) return;
+    if(!fp) return;
 
     FILE *temp = fopen("data/pending_temp.csv", "w");
-    if (!temp) {
+    if(!temp){
         fclose(fp);
         return;
     }
 
     char line[256];
     int current = 0;
-    while (fgets(line, sizeof line, fp)) {
-        if (current != index) {
+    while(fgets(line, sizeof line, fp)){
+        if(current != index){
             fputs(line, temp);
         }
         current++;
@@ -167,4 +168,5 @@ void remove_pending_index(int index) {
     fclose(temp);
     remove("data/pending_reports.csv");
     rename("data/pending_temp.csv", "data/pending_reports.csv");
+    
 }
