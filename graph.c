@@ -112,6 +112,33 @@ void graph_dfs(GraphNode *nodes[], const char *start_phone){
     dfs_visit(start);
 
 }
+// Remove edge relation
+void graph_remove_edge(GraphNode *nodes[], const char *phoneA, const char *phoneB){
+
+    GraphNode *a = graph_get_node(nodes, phoneA);
+    GraphNode *b = graph_get_node(nodes, phoneB);
+    if(!a || !b) return;
+
+    // Remove B from A's neighbors
+    for(int i = 0; i < a->neighbor_count; ++i){
+        if(strcmp(a->neighbors[i]->phone, phoneB) == 0){
+            for(int j = i; j < a->neighbor_count - 1; ++j)
+                a->neighbors[j] = a->neighbors[j + 1];
+            a->neighbor_count--;
+            break;
+        }
+    }
+
+    // Remove A from B's neighbors
+    for(int i = 0; i < b->neighbor_count; ++i){
+        if(strcmp(b->neighbors[i]->phone, phoneA) == 0){
+            for(int j = i; j < b->neighbor_count - 1; ++j)
+                b->neighbors[j] = b->neighbors[j + 1];
+            b->neighbor_count--;
+            break;
+        }
+    }
+}
 /*
  * Frees a graph node safely. Clears neighbors and resets status.
  */

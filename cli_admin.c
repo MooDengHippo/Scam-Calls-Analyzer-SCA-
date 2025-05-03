@@ -2,148 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cli_admin.h"
+#include "csv_manage.h"
 #include "phone_format.h"
-#include "hash_table.h"
-#include "graph.h"
 #include "logging.h"
-#define PENDING_FILE "data/pending_reports.csv"
-#define RECORD_FILE "data/scam_numbers.csv"
-#define EDGE_FILE   "data/scam_edges.csv"
 
-// External CSV writing functions
-extern int csv_write_data(const char *fname, HashTable *map);
-extern int csv_write_edges(const char *fname, GraphNode **nodes);
-
-// Update report to scam numbers
-static void accept_pending_report(const char *line, HashTable *table, GraphNode *nodes[]){
-
-    char copy[128];
-    strncpy(copy, line, sizeof(copy));
-    char *phone_token = strtok(copy, ",\n");
-    if(!phone_token) return;
-
-    char norm[MAX_PHONE_LENGTH];
-    if(Normalize_Phone(phone_token, norm, sizeof(norm)) < 0){
-        printf("Invalid phone format: %s\n", phone_token);
-        Logging_Write(LOG_WARN, "Admin tried to accept invalid phone: %s", phone_token);
-        return;
-    }
-
-    GraphNode *node = graph_get_node(nodes, norm);
-    int neighbors = node ? node->neighbor_count : 0;
-
-    ScamRecord *rec = hash_table_lookup(table, norm);
-    if(rec){
-        rec->report_count++;
-        rec->suspicious_score = calculate_score(norm, rec->report_count, neighbors);
-        printf("[Updated] %s now has %d reports and score %.2f\n", norm, rec->report_count, rec->suspicious_score);
-        Logging_Write(LOG_INFO, "Accepted report updated existing: %s (%.2f, %d)", norm, rec->suspicious_score, rec->report_count);
-    }else{
-        float score = calculate_score(norm, 1, neighbors);
-        hash_table_insert(table, norm, score, 1);
-        printf("[Added] New record %s with 1 report and score %.2f\n", norm, score);
-        Logging_Write(LOG_INFO, "Accepted report added new: %s (%.2f, 1)", norm, score);
-    }
-
-    // Save both updated record and relationship graph
-    csv_write_data(RECORD_FILE, table);
-    csv_write_edges(EDGE_FILE, nodes);
-}
-// View pending
-static void view_pending_reports(HashTable *table, GraphNode *nodes[]){
-
-    FILE *fp = fopen(PENDING_FILE, "r");
-    if(!fp){
-        puts("\nNo pending reports found.\n");
-        Logging_Write(LOG_WARN, "Admin tried to view missing pending_reports.csv");
-        return;
-    }
-
-    char lines[100][128];
-    int line_num = 0;
-    puts("\n--- Pending Reports ---");
-    while(fgets(lines[line_num], sizeof(lines[line_num]), fp)){
-        printf(" %d) %s", line_num + 1, lines[line_num]);
-        line_num++;
-    }
-    fclose(fp);
-    if(line_num == 0){
-        puts("\nNo entries to process.\n");
-        return;
-    }
-    Logging_Write(LOG_INFO, "Admin viewed pending reports");
-
-    printf("\nSelect report number to accept (q to skip): ");
-    char input[16];
-    if(!fgets(input, sizeof input, stdin)) return;
-    if(input[0] == 'q' || input[0] == 'Q') return;
-
-    int choice = atoi(input);
-    if(choice <= 0 || choice > line_num){
-        puts("\nInvalid selection.\n");
-        return;
-    }
-
-    accept_pending_report(lines[choice - 1], table, nodes);
-
-    FILE *out = fopen("data/tmp.csv", "w");
-    if(!out){
-        puts("\nFile error during cleanup!\n");
-        return;
-    }
-    for(int i = 0; i < line_num; ++i){
-        if (i != choice - 1) {
-            fputs(lines[i], out);
-        }
-    }
-    fclose(out);
-    remove(PENDING_FILE);
-    rename("data/tmp.csv", PENDING_FILE);
-    puts("\nReport accepted and applied to database.\n");
-
-}
-// Analyze number function
-static void analyze_number(HashTable *table, GraphNode *nodes[]){
-
-    char raw[64];
-    printf("Enter phone to analyze (or 'q' to cancel): ");
-    if(!fgets(raw, sizeof raw, stdin)) return;
-    if(strncmp(raw, "q", 1) == 0 || strncmp(raw, "Q", 1) == 0) return;
-
-    char norm[MAX_PHONE_LENGTH];
-    if(Normalize_Phone(raw, norm, sizeof(norm)) < 0){
-        puts("\nInvalid phone format!\n");
-        Logging_Write(LOG_WARN, "Admin analyze failed, invalid phone: %s", raw);
-        return;
-    }
-
-    GraphNode *node = graph_get_node(nodes, norm);
-    int neighbors = node ? node->neighbor_count : 0;
-
-    ScamRecord *rec = hash_table_lookup(table, norm);
-    if(rec){
-        printf("\nPhone: %s\nRisk Score: %.2f\nReports: %d\n", rec->phone, rec->suspicious_score, rec->report_count);
-        Logging_Write(LOG_INFO, "Admin analyzed (found): %s", norm);
-
-        if(node && node->neighbor_count > 0){
-            puts("Connected numbers in scam relationship:");
-            for (int i = 0; i < node->neighbor_count; ++i)
-                printf(" - %s\n", node->neighbors[i]->phone);
-        }
-    }else{
-        if(node && node->neighbor_count > 0){
-            printf("\nNo record found, but connected to %d neighbors:\n", node->neighbor_count);
-            for(int i = 0; i < node->neighbor_count; ++i)
-                printf(" - %s\n", node->neighbors[i]->phone);
-            Logging_Write(LOG_INFO, "Admin analyzed E-only record: %s", norm);
-        }else{
-            puts("\nNo record or relationship found.\n");
-        }
-    }
-    
-}
-// Convert suspicious score to textual risk level
-static const char* get_risk_level_description(float score){
+// Convert score to description
+static const char *get_risk_level_description(float score){
 
     if(score >= 0.81f) return "SEVERE";
     else if(score >= 0.61f) return "HIGH";
@@ -152,138 +16,290 @@ static const char* get_risk_level_description(float score){
     else return "VERY LOW";
 
 }
-// Show all scam records in clean table format
-static void view_formatted_reports(HashTable *table){
+// Show bar for risk score
+static void display_suspicious_score(float score){
 
-    puts("\n--- Scam Report Table ---");
+    int bar = (int)(score * 20);
+    printf("\nSuspicious Score: %6.2f %%\n[", score * 100);
+    for(int i = 0; i < 20; ++i)
+        putchar(i < bar ? '#' : '-');
+    puts("]\n");
+
+}
+// Risk info summary
+static void display_user_risk_table(ScamRecord *rec){
+
     printf("=============================================\n");
     printf("|  Phone Number   | Reports |  Risk Level   |\n");
     printf("---------------------------------------------\n");
-
-    for(int i = 0; i < TABLE_SIZE; ++i){
-        ScamRecord *rec = table->buckets[i];
-        while(rec){
-            printf("|  %-15s |   %-6d |  %-11s |\n",
-                rec->phone,
-                rec->report_count,
-                get_risk_level_description(rec->suspicious_score));
-            rec = rec->next;
-        }
-    }
-
-    printf("=============================================\n");
-    Logging_Write(LOG_INFO, "Admin viewed formatted scam number reports");
+    printf("|  %-15s |   %-6d |  %-11s |\n",
+        rec->phone,
+        rec->report_count,
+        get_risk_level_description(rec->suspicious_score));
+    printf("=============================================\n\n");
 
 }
-// Admin Menu
+// Reset visited flags in graph
+static void reset_graph_visits(GraphNode *nodes[]){
+
+    for(int i = 0; i < MAX_NODES; ++i)
+        if(nodes[i]) nodes[i]->visited = 0;
+
+}
+
+// Print graph tree view
+static void display_graph_ui(GraphNode *node, int level){
+
+    if(!node || node->visited) return;
+    node->visited = 1;
+
+    for(int i = 0; i < level; ++i) printf("  ");
+    printf("+-- %s\n", node->phone);
+
+    for(int i = 0; i < node->neighbor_count; ++i)
+        display_graph_ui(node->neighbors[i], level + 1);
+
+}
+// Pull and normalize phone
+static int input_and_normalize_phone(char *prompt, char *normalized) {
+    char raw[64];
+    printf("%s", prompt);
+    if (!fgets(raw, sizeof raw, stdin)) return -1;
+    if (raw[0] == 'q' || raw[0] == 'Q') return -1;
+    return Normalize_Phone(raw, normalized, MAX_PHONE_LENGTH);
+}
+// เพิ่ม Record หรือเชื่อม Graph
+static void admin_add(HashTable *table, GraphNode *nodes[]){
+
+    puts("\nAdd:");
+    puts("1) Record");
+    puts("2) Relationship Edge");
+    printf("Enter choice (or 'q' to cancel): ");
+
+    char input[16];
+    fgets(input, sizeof input, stdin);
+    if (input[0] == 'q' || input[0] == 'Q') return;
+
+    if(input[0] == '1'){
+        char norm[MAX_PHONE_LENGTH];
+        if (input_and_normalize_phone("Enter phone number to add: ", norm) < 0){
+            puts("\nInvalid phone format or cancelled.\n"); return;
+        }
+
+        ScamRecord *rec = hash_table_lookup(table, norm);
+        if(rec){
+            printf("\nRecord exists. Current report: %d\n", rec->report_count);
+            printf("Increase report count? (y/n): ");
+            char ans[8]; fgets(ans, sizeof ans, stdin);
+            if(ans[0] == 'y' || ans[0] == 'Y'){
+                rec->report_count++;
+                rec->suspicious_score = calculate_score(norm, rec->report_count, 
+                                        graph_get_node(nodes, norm)->neighbor_count);
+                puts("\nReport increased!\n");
+                Logging_Write(LOG_INFO, "Admin increased report for %s", norm);
+            }
+            return;
+        }
+
+        printf("Enter number of reports: ");
+        int rep = 0;
+        if(scanf("%d%*c", &rep) != 1 || rep < 1){
+            puts("\nInvalid report count!\n"); while(getchar() != '\n'); return;
+        }
+
+        int neighbors = graph_get_node(nodes, norm)->neighbor_count;
+        float score = calculate_score(norm, rep, neighbors);
+        hash_table_insert(table, norm, score, rep);
+        puts("\nRecord added!\n");
+        Logging_Write(LOG_INFO, "Admin added record: %s", norm);
+
+    }else if(input[0] == '2'){
+        char normA[MAX_PHONE_LENGTH], normB[MAX_PHONE_LENGTH];
+        if(input_and_normalize_phone("Enter phone A: ", normA) < 0) return;
+        if(input_and_normalize_phone("Enter phone B: ", normB) < 0) return;
+
+        graph_add_edge(nodes, normA, normB);
+        ScamRecord *r1 = hash_table_lookup(table, normA);
+        ScamRecord *r2 = hash_table_lookup(table, normB);
+        if(r1) r1->suspicious_score = calculate_score(normA, r1->report_count, graph_get_node(nodes, normA)->neighbor_count);
+        if(r2) r2->suspicious_score = calculate_score(normB, r2->report_count, graph_get_node(nodes, normB)->neighbor_count);
+
+        printf("\nEdge added. Increase risk score due to connection? (y/n): ");
+        char ans[8]; fgets(ans, sizeof ans, stdin);
+        if(ans[0] == 'y' || ans[0] == 'Y'){
+            if(r1) r1->report_count++, Logging_Write(LOG_INFO, "Increased risk score for %s due to connection.", normA);
+            if(r2) r2->report_count++, Logging_Write(LOG_INFO, "Increased risk score for %s due to connection.", normB);
+        }
+        puts("\nRelationship updated.\n");
+        Logging_Write(LOG_INFO, "Admin added edge: %s <-> %s", normA, normB);
+
+    }else{
+        puts("\nInvalid choice.\n");
+    }
+}
+// แก้ไข Record แบบยืนยัน
+static void admin_edit(HashTable *table, GraphNode *nodes[]){
+    char norm[MAX_PHONE_LENGTH];
+    if(input_and_normalize_phone("Enter phone to edit: ", norm) < 0) return;
+
+    ScamRecord *rec = hash_table_lookup(table, norm);
+    if(!rec){ puts("\nNot found.\n"); return; }
+
+    printf("\nCurrent Report = %d | Score = %.2f\n", rec->report_count, rec->suspicious_score);
+    printf("Enter new report count (or 'q' to cancel): ");
+
+    char buf[32];
+    if(!fgets(buf, sizeof buf, stdin) || buf[0] == 'q' || buf[0] == 'Q') return;
+    int val = atoi(buf);
+    printf("Confirm changing report count to %d? (y/n): ", val);
+    char ans[8]; fgets(ans, sizeof ans, stdin);
+    if(ans[0] == 'y' || ans[0] == 'Y'){
+        rec->report_count = val;
+        rec->suspicious_score = calculate_score(norm, val, graph_get_node(nodes, norm)->neighbor_count);
+        puts("\nRecord updated.\n");
+        Logging_Write(LOG_INFO, "Admin edited record %s to report %d", norm, val);
+    }
+}
+// ลบ Record หรือ Graph Edge พร้อมยืนยัน และ q
+static void admin_delete(HashTable *table, GraphNode *nodes[]){
+    puts("\nDelete:");
+    puts("1) Record");
+    puts("2) Relationship Edge");
+    printf("Enter choice (or 'q' to cancel): ");
+    char input[16];
+    fgets(input, sizeof input, stdin);
+    if(input[0] == 'q' || input[0] == 'Q') return;
+
+    if(input[0] == '1'){
+        char norm[MAX_PHONE_LENGTH];
+        if(input_and_normalize_phone("Enter phone to delete: ", norm) < 0) return;
+        ScamRecord *rec = hash_table_lookup(table, norm);
+        if(!rec){ puts("\nNumber not found.\n"); return; }
+        printf("Confirm delete %s? (y/n): ", norm);
+        char ans[8]; fgets(ans, sizeof ans, stdin);
+        if(ans[0] == 'y' || ans[0] == 'Y'){
+            hash_table_delete(table, norm);
+            puts("\nRecord deleted.\n");
+            Logging_Write(LOG_INFO, "Admin deleted record: %s", norm);
+        }
+    }else if(input[0] == '2'){
+        char normA[MAX_PHONE_LENGTH], normB[MAX_PHONE_LENGTH];
+        if(input_and_normalize_phone("Phone A: ", normA) < 0) return;
+        if(input_and_normalize_phone("Phone B: ", normB) < 0) return;
+        printf("Confirm unlink %s <-> %s? (y/n): ", normA, normB);
+        char ans[8]; fgets(ans, sizeof ans, stdin);
+        if(ans[0] == 'y' || ans[0] == 'Y'){
+            graph_remove_edge(nodes, normA, normB);
+            puts("\nEdge removed.\n");
+            Logging_Write(LOG_INFO, "Admin removed edge %s <-> %s", normA, normB);
+        }
+    }else puts("\nInvalid choice.\n");
+}
+// รับเบอร์ที่ pending มาเพิ่มลง record จริง พร้อมลบจาก pending
+static void admin_view_pending(HashTable *table, GraphNode *nodes[]){
+    FILE *fp = fopen("data/pending_reports.csv", "r");
+    if(!fp){ puts("Cannot open pending_reports.csv\n"); return; }
+
+    char phones[100][32];
+    int count = 0;
+    char line[128];
+    puts("\nPending Reports:");
+    while(fgets(line, sizeof line, fp) && count < 100){
+        sscanf(line, "%[^,]", phones[count]);
+        printf("%d) %s\n", count+1, phones[count]);
+        count++;
+    }
+    fclose(fp);
+    if(count == 0){ puts("No pending reports.\n"); return; }
+
+    printf("Enter index to accept (or 'q' to cancel): ");
+    char input[16];
+    fgets(input, sizeof input, stdin);
+    if(input[0] == 'q' || input[0] == 'Q') return;
+    int idx = atoi(input);
+    if(idx < 1 || idx > count){ puts("\nInvalid index.\n"); return; }
+
+    char norm[MAX_PHONE_LENGTH];
+    if(Normalize_Phone(phones[idx-1], norm, sizeof(norm)) < 0){ puts("Invalid format!\n"); return; }
+    ScamRecord *rec = hash_table_lookup(table, norm);
+    if(rec){
+        rec->report_count++;
+        rec->suspicious_score = calculate_score(norm, rec->report_count, graph_get_node(nodes, norm)->neighbor_count);
+    }else{
+        hash_table_insert(table, norm, 1.0, 1);
+    }
+    Logging_Write(LOG_INFO, "Admin accepted pending report: %s", norm);
+    remove_pending_index(idx);
+    puts("\nAccepted and added to main record.\n");
+}
+// Show full table and full graph links
+static void admin_view_format(HashTable *table, GraphNode *nodes[]){
+    puts("\nView:");
+    puts("1) Record Table");
+    puts("2) Graph Links");
+    printf("Enter choice (or 'q' to cancel): ");
+    char input[16]; fgets(input, sizeof input, stdin);
+    if(input[0] == 'q' || input[0] == 'Q') return;
+
+    if(input[0] == '1'){
+        for(int i = 0; i < TABLE_SIZE; ++i){
+            ScamRecord *rec = table->buckets[i];
+            while(rec){
+                display_user_risk_table(rec);
+                rec = rec->next;
+            }
+        }
+        Logging_Write(LOG_INFO, "Admin viewed full record table");
+    }else if(input[0] == '2'){
+        reset_graph_visits(nodes);
+        for(int i = 0; i < MAX_NODES; ++i){
+            if(nodes[i] && !nodes[i]->visited)
+                display_graph_ui(nodes[i], 0);
+        }
+        Logging_Write(LOG_INFO, "Admin viewed graph links");
+    }else puts("\nInvalid choice.\n");
+}
+// Analyze number like user
+static void admin_analyze(HashTable *table, GraphNode *nodes[]){
+    char norm[MAX_PHONE_LENGTH];
+    if(input_and_normalize_phone("Enter phone to analyze: ", norm) < 0) return;
+    ScamRecord *rec = hash_table_lookup(table, norm);
+    if(rec){
+        display_suspicious_score(rec->suspicious_score);
+        display_user_risk_table(rec);
+    } else puts("\nNot found.\n");
+    reset_graph_visits(nodes);
+    GraphNode *start = graph_get_node(nodes, norm);
+    if(start && start->neighbor_count > 0){
+        puts("\nConnected numbers:\n");
+        display_graph_ui(start, 0);
+    } else puts("\nNo links.\n");
+    Logging_Write(LOG_INFO, "Admin analyzed number: %s", norm);
+}
+// Main admin loop
 void admin_mode(HashTable *table, GraphNode *nodes[]){
-
+    Logging_Write(LOG_INFO, "Admin Mode Entered");
     while(1){
-        puts("\n--- Admin Menu ---");
-        puts(" 1) Add/update suspicious phone record");
-        puts(" 2) Add relationship edge");
-        puts(" 3) Delete suspicious phone record");
-        puts(" 4) View pending reports");
-        puts(" 5) View formatted scam numbers table");
-        puts(" 6) Analyze number");
-        puts(" 7) Back to main menu");
-        printf("Select: ");
-
-        int choice = 0;
-        if(scanf("%d%*c", &choice) != 1) choice = 6;
-
-        if(choice == 1){
-            char phone[64];
-            printf("Phone (or 'q' to cancel): ");
-            if (!fgets(phone, sizeof phone, stdin)) break;
-            if (phone[0] == 'q' || phone[0] == 'Q') continue;
-            phone[strcspn(phone, "\n")] = 0;
-
-            char norm[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(phone, norm, sizeof(norm)) < 0){
-                puts("Invalid phone format!");
-                continue;
-            }
-
-            GraphNode *node = graph_get_node(nodes, norm);
-            int neighbors = node ? node->neighbor_count : 0;
-
-            ScamRecord *old = hash_table_lookup(table, norm);
-            if(old){
-                printf("This number already exists with score %.2f and reports %d\n", old->suspicious_score, old->report_count);
-                printf("Do you want to increase the report count? (y/n): ");
-                char yn[8];
-                if(fgets(yn, sizeof yn, stdin) && (yn[0] == 'y' || yn[0] == 'Y')){
-                    old->report_count++;
-                    old->suspicious_score = calculate_score(norm, old->report_count, neighbors);
-                    printf("Updated record: %s (Score: %.2f, Reports: %d)\n", norm, old->suspicious_score, old->report_count);
-                    Logging_Write(LOG_INFO, "Admin incremented report on existing: %s (%.2f, %d)", norm, old->suspicious_score, old->report_count);
-                    csv_write_data(RECORD_FILE, table);
-                }else{
-                    puts("\nNo changes made.\n");
-                }
-            }else{
-                float score = calculate_score(norm, 0, neighbors);
-                hash_table_insert(table, norm, score, 0);
-                printf("Added new record: %s (Score: %.2f, Reports: 0)\n", norm, score);
-                Logging_Write(LOG_INFO, "Admin added new record: %s (%.2f, 0)", norm, score);
-                csv_write_data(RECORD_FILE, table);
-            }
-        }else if(choice == 2){
-            char phoneA[64], phoneB[64];
-            printf("Phone A (or 'q' to cancel): ");
-            if(!fgets(phoneA, sizeof phoneA, stdin) || phoneA[0] == 'q' || phoneA[0] == 'Q') continue;
-            printf("Phone B (or 'q' to cancel): ");
-            if(!fgets(phoneB, sizeof phoneB, stdin) || phoneB[0] == 'q' || phoneB[0] == 'Q') continue;
-
-            char normA[MAX_PHONE_LENGTH], normB[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(phoneA, normA, sizeof(normA)) < 0 ||
-                Normalize_Phone(phoneB, normB, sizeof(normB)) < 0){
-                puts("\nInvalid phone format!\n");
-                continue;
-            }
-
-            if(strlen(normA) < 10 || strlen(normB) < 10){
-                puts("\nPhone number too short to create relationship.\n");
-                continue;
-            }
-
-            graph_add_edge(nodes, normA, normB);
-            printf("Linked %s <--> %s\n", normA, normB);
-            Logging_Write(LOG_INFO, "Admin linked %s <--> %s", normA, normB);
-            csv_write_edges(EDGE_FILE, nodes);
-
-        }else if(choice == 3){
-            printf("Phone to delete (q to cancel): ");
-            char dp[64];
-            if(!fgets(dp, sizeof dp, stdin) || dp[0] == 'q' || dp[0] == 'Q') continue;
-            dp[strcspn(dp, "\n")] = 0;
-
-            char dn[MAX_PHONE_LENGTH];
-            if(Normalize_Phone(dp, dn, sizeof(dn)) < 0){
-                puts("\nInvalid phone format!\n");
-                continue;
-            }
-            if(hash_table_delete(table, dn)){
-                printf("Deleted %s\n", dn);
-                Logging_Write(LOG_INFO, "Admin deleted record: %s", dn);
-                csv_write_data(RECORD_FILE, table);
-            }else{
-                puts("\nRecord not found!\n");
-            }
-        }else if(choice == 4){
-            view_pending_reports(table, nodes);
-        }else if(choice == 5){
-            view_formatted_reports(table);
-        }else if(choice == 6){
-            analyze_number(table, nodes);
-        }else if(choice == 7){
+        puts("\n=====================");
+        puts("Admin Menu:");
+        puts("1) Add Record/Edge");
+        puts("2) Edit Record");
+        puts("3) Delete Record/Edge");
+        puts("4) View Pending Reports");
+        puts("5) View Formatted Data");
+        puts("6) Analyze Number");
+        puts("7) Back to Main Menu");
+        printf("Enter choice: ");
+        char input[16]; fgets(input, sizeof input, stdin);
+        if(input[0] == '1') admin_add(table, nodes);
+        else if(input[0] == '2') admin_edit(table, nodes);
+        else if(input[0] == '3') admin_delete(table, nodes);
+        else if(input[0] == '4') admin_view_pending(table, nodes);
+        else if(input[0] == '5') admin_view_format(table, nodes);
+        else if(input[0] == '6') admin_analyze(table, nodes);
+        else if(input[0] == '7') {
             Logging_Write(LOG_INFO, "Admin exited Admin Mode");
             break;
-        }else{
-            puts("\nInvalid selection. Please choose between 1 and 7.\n");
-            continue;
-        }
+        }else puts("\nInvalid choice.\n");
     }
-
 }

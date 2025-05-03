@@ -24,5 +24,7 @@ int csv_write_data(const char *fname, HashTable *table);
  * Format: E, <phoneA>, <phoneB>
  */
 int csv_write_edges(const char *fname, GraphNode *nodes[]);
+// Remove index
+void remove_pending_index(int index);
 
 #endif // CSV_MANAGE_H

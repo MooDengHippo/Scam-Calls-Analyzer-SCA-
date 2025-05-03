@@ -143,3 +143,24 @@ int csv_write_edges(const char *fname, GraphNode *nodes[]){
     return 0;
 
 }
+// remove index pending_reports.csv and then write a new one
+void remove_pending_index(int index) {
+    FILE *fp = fopen("data/pending_reports.csv", "r");
+    if (!fp) return;
+
+    char lines[256][128];
+    int count = 0;
+    while (fgets(lines[count], sizeof(lines[count]), fp)) {
+        count++;
+    }
+    fclose(fp);
+
+    fp = fopen("data/pending_reports.csv", "w");
+    if (!fp) return;
+
+    for (int i = 0; i < count; ++i) {
+        if (i != index - 1) // ไม่เขียน index ที่เลือก
+            fputs(lines[i], fp);
+    }
+    fclose(fp);
+}

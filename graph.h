@@ -24,6 +24,8 @@ void graph_add_edge(GraphNode *nodes[], const char *p1, const char *p2);
 void graph_bfs(GraphNode *nodes[], const char *start_phone);
 // Perform DFS traversal from a starting phone number.
 void graph_dfs(GraphNode *nodes[], const char *start_phone);
+// Delete edge
+void graph_remove_edge(GraphNode *nodes[], const char *phoneA, const char *phoneB);
 // Free a graph node and clear its data.
 void graph_node_free(GraphNode *node);
 
