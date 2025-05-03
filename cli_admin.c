@@ -54,7 +54,7 @@ static void view_pending_reports(HashTable *table, GraphNode *nodes[]){
 
     FILE *fp = fopen(PENDING_FILE, "r");
     if(!fp){
-        puts("No pending reports found.");
+        puts("\nNo pending reports found.\n");
         Logging_Write(LOG_WARN, "Admin tried to view missing pending_reports.csv");
         return;
     }
@@ -68,7 +68,7 @@ static void view_pending_reports(HashTable *table, GraphNode *nodes[]){
     }
     fclose(fp);
     if(line_num == 0){
-        puts("No entries to process.");
+        puts("\nNo entries to process.\n");
         return;
     }
     Logging_Write(LOG_INFO, "Admin viewed pending reports");
@@ -80,7 +80,7 @@ static void view_pending_reports(HashTable *table, GraphNode *nodes[]){
 
     int choice = atoi(input);
     if(choice <= 0 || choice > line_num){
-        puts("Invalid selection.");
+        puts("\nInvalid selection.\n");
         return;
     }
 
@@ -88,7 +88,7 @@ static void view_pending_reports(HashTable *table, GraphNode *nodes[]){
 
     FILE *out = fopen("data/tmp.csv", "w");
     if(!out){
-        puts("File error during cleanup!");
+        puts("\nFile error during cleanup!\n");
         return;
     }
     for(int i = 0; i < line_num; ++i){
@@ -99,7 +99,7 @@ static void view_pending_reports(HashTable *table, GraphNode *nodes[]){
     fclose(out);
     remove(PENDING_FILE);
     rename("data/tmp.csv", PENDING_FILE);
-    puts("Report accepted and applied to database.");
+    puts("\nReport accepted and applied to database.\n");
 
 }
 // Analyze number function
@@ -107,12 +107,12 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
 
     char raw[64];
     printf("Enter phone to analyze (or 'q' to cancel): ");
-    if (!fgets(raw, sizeof raw, stdin)) return;
-    if (strncmp(raw, "q", 1) == 0 || strncmp(raw, "Q", 1) == 0) return;
+    if(!fgets(raw, sizeof raw, stdin)) return;
+    if(strncmp(raw, "q", 1) == 0 || strncmp(raw, "Q", 1) == 0) return;
 
     char norm[MAX_PHONE_LENGTH];
     if(Normalize_Phone(raw, norm, sizeof(norm)) < 0){
-        puts("Invalid phone format!");
+        puts("\nInvalid phone format!\n");
         Logging_Write(LOG_WARN, "Admin analyze failed, invalid phone: %s", raw);
         return;
     }
@@ -137,7 +137,7 @@ static void analyze_number(HashTable *table, GraphNode *nodes[]){
                 printf(" - %s\n", node->neighbors[i]->phone);
             Logging_Write(LOG_INFO, "Admin analyzed E-only record: %s", norm);
         }else{
-            puts("\nNo record or relationship found.");
+            puts("\nNo record or relationship found.\n");
         }
     }
     
@@ -220,7 +220,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                     Logging_Write(LOG_INFO, "Admin incremented report on existing: %s (%.2f, %d)", norm, old->suspicious_score, old->report_count);
                     csv_write_data(RECORD_FILE, table);
                 }else{
-                    puts("No changes made.");
+                    puts("\nNo changes made.\n");
                 }
             }else{
                 float score = calculate_score(norm, 0, neighbors);
@@ -239,12 +239,12 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             char normA[MAX_PHONE_LENGTH], normB[MAX_PHONE_LENGTH];
             if(Normalize_Phone(phoneA, normA, sizeof(normA)) < 0 ||
                 Normalize_Phone(phoneB, normB, sizeof(normB)) < 0){
-                puts("Invalid phone format!");
+                puts("\nInvalid phone format!\n");
                 continue;
             }
 
             if(strlen(normA) < 10 || strlen(normB) < 10){
-                puts("Phone number too short to create relationship.");
+                puts("\nPhone number too short to create relationship.\n");
                 continue;
             }
 
@@ -253,7 +253,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             Logging_Write(LOG_INFO, "Admin linked %s <--> %s", normA, normB);
             csv_write_edges(EDGE_FILE, nodes);
 
-        }else if (choice == 3){
+        }else if(choice == 3){
             printf("Phone to delete (q to cancel): ");
             char dp[64];
             if(!fgets(dp, sizeof dp, stdin) || dp[0] == 'q' || dp[0] == 'Q') continue;
@@ -261,7 +261,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
 
             char dn[MAX_PHONE_LENGTH];
             if(Normalize_Phone(dp, dn, sizeof(dn)) < 0){
-                puts("Invalid phone format!");
+                puts("\nInvalid phone format!\n");
                 continue;
             }
             if(hash_table_delete(table, dn)){
@@ -269,7 +269,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
                 Logging_Write(LOG_INFO, "Admin deleted record: %s", dn);
                 csv_write_data(RECORD_FILE, table);
             }else{
-                puts("Record not found!");
+                puts("\nRecord not found!\n");
             }
         }else if(choice == 4){
             view_pending_reports(table, nodes);
@@ -281,7 +281,7 @@ void admin_mode(HashTable *table, GraphNode *nodes[]){
             Logging_Write(LOG_INFO, "Admin exited Admin Mode");
             break;
         }else{
-            puts("Invalid selection. Please choose between 1 and 7.");
+            puts("\nInvalid selection. Please choose between 1 and 7.\n");
             continue;
         }
     }
