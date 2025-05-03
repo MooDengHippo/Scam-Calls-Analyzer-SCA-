@@ -215,4 +215,6 @@ ___________________________________________________________________
 |   ├── CODESTANDARD.md           # Define Coding Style
 │   ├── Scam Calls Analyzer.pdf   # Full Project Report
 │   ├── test_case.txt             # Test Case Combination
+|
+└────── sca.exe                   # Program Execution
 ___________________________________________________________________
