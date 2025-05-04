@@ -78,12 +78,11 @@ The Scam Calls Analyzer (SCA) is a phone number risk evaluation system built wit
 
 ## ⏱️ Time & Space Complexity
 
-| Operation   | Time Complexity | Notes       |
-|---------------------------|-----------------|-------------------------------------|
-| Hash Table Insert/Lookup| O(1) avg-case|O(n) worst-case (chaining collision)|
-| Graph Add Edge | O(1) | Simple bidirectional edge insert |
-| BFS/DFS Traversal | O(V + E) | V = number of nodes, E = edges |
-| CSV Read/Write | O(n) | n = number of records |
+| Operation            | Time     | Space| Description                        |
+|----------------------|----------|------|------------------------------------|
+| Hash Insert / Lookup | O(1) Avg case| O(n) | Worst case (chaining collision)|
+| Graph Add Edge       | O(1)  | O(1) | Simple bidirectional edge insert      |
+| BFS / DFS Traversal  | O(V + E)| O(V) | V = number of nodes, E = edges      |
 
 ---
 
