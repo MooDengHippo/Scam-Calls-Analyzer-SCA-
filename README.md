@@ -213,8 +213,8 @@ ___________________________________________________________________
 ├── 📁 docs                         # Documentation
 │   ├── README.md                 # Project Overview & Guide
 |   ├── Scam Calls Analyzer.pdf   # Full Project Report
-│   ├── Code Standard.txt         # Define Coding Style
-│   ├── Test Cases.txt             # Test Case Combination 
+│   ├── Code Standard.pdf         # Define Coding Style
+│   ├── Test Cases.pdf            # Test Case Combination 
 |
 └────── sca.exe                   # Program Execution
 ___________________________________________________________________
