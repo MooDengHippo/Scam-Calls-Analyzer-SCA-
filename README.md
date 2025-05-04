@@ -83,6 +83,8 @@ The Scam Calls Analyzer (SCA) is a phone number risk evaluation system built wit
 | Hash Insert / Lookup | O(1) Avg case| O(n) | Worst case (chaining collision)|
 | Graph Add Edge       | O(1)  | O(1) | Simple bidirectional edge insert      |
 | BFS / DFS Traversal  | O(V + E)| O(V) | V = number of nodes, E = edges      |
+| CSV Read             | O(n + e)   | O(n + e)  | Load scam into data structures |
+| CSV Write            | O(n + e)   | O(1)      | Save all scam into database |
 
 ---
 
@@ -210,7 +212,7 @@ ___________________________________________________________________
 │   ├── pending_reports.csv       # Pending User Reports
 │   ├── app.log                   # Application Logs
 ├── 📁 docs                         # Documentation
-|   ├── Scam Calls Analyzer.pdf   # Full Project Report
+|   ├── SCA Report.pdf            # Full Project Report
 │   ├── Code Standard.pdf         # Define Coding Style
 │   ├── Test Cases.pdf            # Test Case Combination
 ├── 📁 stress                       # Stress Data Sets
