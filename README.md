@@ -211,7 +211,6 @@ ___________________________________________________________________
 │   ├── pending_reports.csv       # Pending User Reports
 │   ├── app.log                   # Application Logs
 ├── 📁 docs                         # Documentation
-│   ├── README.md                 # Project Overview & Guide
 |   ├── Scam Calls Analyzer.pdf   # Full Project Report
 │   ├── Code Standard.pdf         # Define Coding Style
 │   ├── Test Cases.pdf            # Test Case Combination
@@ -219,6 +218,7 @@ ___________________________________________________________________
 |   ├── scam_numbers.csv          # Stress Scam Number Database
 |   ├── scam_edges.csv            # Stress Number Relationships
 |   ├── pending_reports.csv       # Stress Pending User Reports
-|
+|   
+├────── README.md                 # Project Overview & Guide
 └────── sca.exe                   # Program Execution
 ___________________________________________________________________
